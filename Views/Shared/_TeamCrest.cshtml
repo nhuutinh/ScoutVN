@@ -1,0 +1,14 @@
+@model Team
+@* Logo câu lạc bộ dạng tròn (giống ảnh đại diện cầu thủ): ảnh logo nếu có, nếu không thì chữ viết tắt *@
+@{
+    var size = ViewData["Size"] as string;
+    var cls = size == "lg" ? "crest crest-lg" : size == "md" ? "crest crest-md" : "crest";
+}
+@if (!string.IsNullOrEmpty(Model.LogoUrl))
+{
+    <span class="@cls crest-img"><img src="@Model.LogoUrl" alt="Logo @Model.Name" /></span>
+}
+else
+{
+    <span class="@cls" title="@Model.Name">@PortalHelper.Initials(Model.ShortName, Model.Name)</span>
+}

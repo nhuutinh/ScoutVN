@@ -1,0 +1,4 @@
+@* Nút chuyển giao diện sáng / tối. ViewData["OnDark"] = true khi đặt trên nền tối *@
+<button type="button" class="theme-toggle @(ViewData["OnDark"] is true ? "on-dark" : "") @ViewData["Extra"]" aria-label="Chuyển giao diện sáng / tối" title="Chuyển giao diện sáng / tối">
+    <i class="bi bi-sun-fill"></i><i class="bi bi-moon-stars-fill"></i>
+</button>

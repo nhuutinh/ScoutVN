@@ -1,0 +1,42 @@
+@model Team
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<input type="hidden" asp-for="Id" />
+<div class="row g-3">
+    <div class="col-md-8">
+        <label asp-for="Name" class="form-label"></label> <span class="text-danger">*</span>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ShortName" class="form-label"></label>
+        <input asp-for="ShortName" class="form-control" />
+        <span asp-validation-for="ShortName" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="City" class="form-label"></label> <span class="text-danger">*</span>
+        <input asp-for="City" class="form-control" />
+        <span asp-validation-for="City" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Stadium" class="form-label"></label>
+        <input asp-for="Stadium" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="FoundedYear" class="form-label"></label>
+        <input asp-for="FoundedYear" class="form-control" />
+        <span asp-validation-for="FoundedYear" class="text-danger small"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="HeadCoach" class="form-label"></label>
+        <input asp-for="HeadCoach" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="LogoUrl" class="form-label"></label>
+        <input asp-for="LogoUrl" class="form-control" placeholder="https://..." />
+        <span asp-validation-for="LogoUrl" class="text-danger small"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+</div>

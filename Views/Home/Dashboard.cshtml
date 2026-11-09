@@ -1,0 +1,125 @@
+@model DashboardViewModel
+@{ ViewData["Title"] = "Bảng điều khiển"; }
+<div class="page-header">
+    <h1>Bảng điều khiển</h1>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="d-flex gap-2">
+            <a asp-controller="Players" asp-action="Create" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Thêm cầu thủ</a>
+            <a asp-controller="PlayerStats" asp-action="Create" class="btn btn-outline-success btn-sm"><i class="bi bi-plus-lg"></i> Nhập thống kê</a>
+        </div>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    @{
+        var cards = new[]
+        {
+            ("Cầu thủ", Model.PlayerCount, "bi-person-badge", "#e8f3ec", "#18663d", "Players"),
+            ("Đội bóng", Model.TeamCount, "bi-shield-shaded", "#e7f0fb", "#1d4f91", "Teams"),
+            ("Giải đấu", Model.TournamentCount, "bi-trophy", "#fdf3e1", "#9a6400", "Tournaments"),
+            ("Bản ghi thống kê", Model.StatCount, "bi-clipboard-data", "#f1eafb", "#5b2c9e", "PlayerStats"),
+        };
+    }
+    @foreach (var c in cards)
+    {
+        <div class="col-6 col-xl-3">
+            <a asp-controller="@c.Item6" asp-action="Index" class="text-decoration-none text-reset">
+                <div class="card stat-card h-100">
+                    <div class="icon" style="background:@c.Item4;color:@c.Item5"><i class="bi @c.Item3"></i></div>
+                    <div><div class="value">@c.Item2</div><div class="label">@c.Item1</div></div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<div class="sv-paged">
+<section class="sv-page" data-title="Cầu thủ nổi bật">
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-star"></i> Top cầu thủ theo chỉ số tổng (thang 100)</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Cầu thủ</th><th>Vị trí</th><th>Đội</th><th class="text-center">Chỉ số tổng</th></tr></thead>
+                    <tbody>
+                    @foreach (var p in Model.TopPlayers)
+                    {
+                        <tr>
+                            <td><a asp-controller="Players" asp-action="Details" asp-route-id="@p.Id">@p.FullName</a></td>
+                            <td><span class="pos-badge">@p.Position</span></td>
+                            <td>@(p.Team?.Name ?? "Tự do")</td>
+                            <td class="text-center"><span class="ovr badge @RatingHelper.BadgeClass(p.Overall)">@p.Overall</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-bullseye"></i> Vua phá lưới – @(ViewBag.LatestLeague ?? "chưa có giải")</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>#</th><th>Cầu thủ</th><th>Đội</th><th class="text-center">Phút</th><th class="text-center">Bàn</th><th class="text-center">Pen</th></tr></thead>
+                    <tbody>
+                    @{ int rank = 1; }
+                    @foreach (var s in Model.TopScorers)
+                    {
+                        <tr>
+                            <td>@(rank++)</td>
+                            <td><a asp-controller="Players" asp-action="Details" asp-route-id="@s.PlayerId">@s.Player?.FullName</a></td>
+                            <td>@(s.Team?.ShortName ?? "-")</td>
+                            <td class="text-center">@s.MinutesPlayed</td>
+                            <td class="text-center fw-bold">@s.Goals</td>
+                            <td class="text-center">@(s.PenaltyGoals?.ToString() ?? "–")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+<section class="sv-page" data-title="Phân bố vị trí &amp; cập nhật gần đây">
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-diagram-3"></i> Phân bố cầu thủ theo vị trí</div>
+            <div class="card-body">
+                @{ var max = Model.PositionGroups.Count == 0 ? 1 : Model.PositionGroups.Max(g => g.Count); }
+                @foreach (var g in Model.PositionGroups)
+                {
+                    <div class="attr-row">
+                        <div class="name" style="width:170px">@g.Label</div>
+                        <div class="progress"><div class="progress-bar bg-success" style="width:@(g.Count * 100 / max)%"></div></div>
+                        <div class="num">@g.Count</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Hồ sơ cập nhật gần đây</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var p in Model.RecentlyUpdated)
+                {
+                    <li class="list-group-item d-flex align-items-center gap-2">
+                        <partial name="_PlayerAvatar" model="p" />
+                        <div class="flex-grow-1">
+                            <a asp-controller="Players" asp-action="Details" asp-route-id="@p.Id">@p.FullName</a>
+                            <div class="small text-muted">@(p.Team?.Name ?? "Tự do") · @p.Position.DisplayName()</div>
+                        </div>
+                        <span class="small text-muted">@p.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+</section>
+</div>

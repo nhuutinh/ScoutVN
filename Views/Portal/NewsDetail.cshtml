@@ -1,0 +1,50 @@
+@model PortalNewsDetailViewModel
+@{
+    var n = Model.News;
+    ViewData["Title"] = n.Title;
+    ViewData["Description"] = n.Summary;
+    Layout = "_PublicLayout";
+}
+<section class="pv-section">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-action="Home">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="News">Tin tức</a></li>
+        <li class="breadcrumb-item"><a asp-action="News" asp-route-category="@n.Category">@n.Category.DisplayName()</a></li>
+    </ol></nav>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <article class="pv-article">
+                @if (!n.IsPublished) { <div class="alert alert-warning py-2 small"><i class="bi bi-eye-slash"></i> Bản nháp – chỉ quản trị viên xem được.</div> }
+                <h1>@n.Title</h1>
+                <div class="pv-meta mb-3"><i class="bi bi-person"></i> @(n.AuthorName ?? "ScoutVN") · <i class="bi bi-clock"></i> @n.PublishedAt.ToString("HH:mm dd/MM/yyyy") · <i class="bi bi-eye"></i> @n.ViewCount lượt xem</div>
+                @if (!string.IsNullOrEmpty(n.ImageUrl))
+                {
+                    <img src="@n.ImageUrl" alt="@n.Title" class="img-fluid rounded mb-3" />
+                }
+                else
+                {
+                    <div class="pv-cover big cov-@((int)n.Category) rounded mb-3" style="aspect-ratio:21/9"><i class="bi @PortalHelper.CategoryIcon(n.Category)"></i></div>
+                }
+                <p class="summary">@n.Summary</p>
+                <div class="content">
+                    @foreach (var para in PortalHelper.Paragraphs(n.Content))
+                    {
+                        <p>@foreach (var line in para.Split('\n')) { @line<br /> }</p>
+                    }
+                </div>
+                @if (n.Tournament != null)
+                {
+                    <a asp-action="Tournament" asp-route-id="@n.TournamentId" class="btn btn-outline-success btn-sm"><i class="bi bi-trophy"></i> Xem thống kê @n.Tournament.Name @n.Tournament.Season</a>
+                }
+                @if (User.IsInRole("Admin")) { <a asp-controller="News" asp-action="Edit" asp-route-id="@n.Id" class="btn btn-outline-primary btn-sm ms-1"><i class="bi bi-pencil"></i> Sửa bài</a> }
+            </article>
+        </div>
+        <div class="col-lg-4">
+            <div class="fw-bold mb-2">Bài viết khác</div>
+            <div class="d-flex flex-column gap-3">
+                @foreach (var r in Model.Related) { <partial name="_NewsCard" model="r" /> }
+                @if (!Model.Related.Any()) { <div class="text-muted small">Chưa có bài liên quan.</div> }
+            </div>
+        </div>
+    </div>
+</section>

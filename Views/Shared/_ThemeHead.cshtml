@@ -1,0 +1,11 @@
+@* Chế độ sáng / tối: đặt data-theme trước khi trang hiển thị để không bị nháy màu *@
+<link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+<script>
+    (function () {
+        var t = null;
+        try { t = localStorage.getItem('sv:theme'); } catch (e) { }
+        if (t !== 'dark' && t !== 'light') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+</script>
+<script src="~/js/theme.js" asp-append-version="true" defer></script>

@@ -1,0 +1,89 @@
+@{
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string Act(params string[] a) => a.Contains(action) ? "active" : "";
+    var authed = User.Identity?.IsAuthenticated == true;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] – ScoutVN</title>
+    <meta name="description" content="@(ViewData["Description"] ?? "ScoutVN – thông tin giải đấu, thống kê cầu thủ và tin tức bóng đá Việt Nam.")" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/portal.css" asp-append-version="true" />
+    <partial name="_ThemeHead" />
+</head>
+<body class="portal">
+<nav class="navbar navbar-expand-lg navbar-dark pv-nav sticky-top py-0">
+    <div class="container">
+        <a class="navbar-brand" asp-controller="Portal" asp-action="Home"><span class="pv-logo"><i class="bi bi-dribbble"></i></span><span>Scout<b>VN</b></span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#pvNav" aria-controls="pvNav" aria-expanded="false" aria-label="Mở menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="pvNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link @Act("Home")" asp-controller="Portal" asp-action="Home"><i class="bi bi-house-door"></i> Trang chủ</a></li>
+                <li class="nav-item"><a class="nav-link @Act("Tournaments", "Tournament")" asp-controller="Portal" asp-action="Tournaments"><i class="bi bi-trophy"></i> Giải đấu</a></li>
+                <li class="nav-item"><a class="nav-link @Act("News", "NewsDetail")" asp-controller="Portal" asp-action="News"><i class="bi bi-newspaper"></i> Tin tức</a></li>
+                <li class="nav-item"><a class="nav-link @Act("Teams", "Team", "Player")" asp-controller="Portal" asp-action="Teams"><i class="bi bi-shield-shaded"></i> Đội bóng</a></li>
+            </ul>
+            <div class="d-flex align-items-center gap-2 pb-3 pb-lg-0 pv-nav-actions">
+                <partial name="_ThemeToggle" view-data='new ViewDataDictionary(ViewData) { { "OnDark", true } }' />
+                @if (authed)
+                {
+                    <a asp-controller="Home" asp-action="Dashboard" class="btn btn-success"><i class="bi bi-speedometer2"></i> Vào hệ thống</a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-light"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập</a>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-success"><i class="bi bi-person-plus"></i> Đăng ký<span class="reg-more">HLV / Tuyển trạch</span></a>
+                }
+            </div>
+        </div>
+    </div>
+</nav>
+
+@RenderSection("Hero", required: false)
+
+<main class="container pb-2">
+    @RenderBody()
+</main>
+
+<footer class="pv-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-5">
+                <h6><i class="bi bi-dribbble"></i> ScoutVN</h6>
+                <p class="mb-2">Hệ thống quản lý, phân tích và hỗ trợ tuyển chọn cầu thủ bóng đá Việt Nam ứng dụng thuật toán KNN và trợ lý AI.</p>
+                <p class="small mb-0">Đồ án ngành – Nhóm 14 · Viện Trí tuệ nhân tạo và Chuyển đổi số · Trường Đại học Bình Dương.</p>
+            </div>
+            <div class="col-6 col-md-3">
+                <h6>Khám phá</h6>
+                <ul class="list-unstyled mb-0">
+                    <li><a asp-controller="Portal" asp-action="Tournaments">Giải đấu</a></li>
+                    <li><a asp-controller="Portal" asp-action="News">Tin tức</a></li>
+                    <li><a asp-controller="Portal" asp-action="Teams">Đội bóng</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md-4">
+                <h6>Dành cho HLV / Tuyển trạch viên</h6>
+                <ul class="list-unstyled mb-0">
+                    <li><a asp-controller="Account" asp-action="Register">Đăng ký tài khoản</a></li>
+                    <li><a asp-controller="Analysis" asp-action="Ranking">Xếp hạng theo tiêu chí</a></li>
+                    <li><a asp-controller="Analysis" asp-action="Compare">So sánh cầu thủ</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="border-secondary" />
+        <div class="small">&copy; 2026 ScoutVN – Đồ án môn học Nhóm 14, Trường Đại học Bình Dương. Số liệu V.League 1 mùa 2025/26 và 2026/27 trích từ trang thống kê công khai FotMob (cập nhật 02/11/2026); chỉ số năng lực cầu thủ là giá trị <b>ước tính</b> của hệ thống, không phải đánh giá chính thức.</div>
+    </div>
+</footer>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

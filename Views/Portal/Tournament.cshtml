@@ -1,0 +1,80 @@
+@model PortalTournamentViewModel
+@{
+    var t = Model.Tournament;
+    ViewData["Title"] = $"{t.Name} {t.Season}";
+    ViewData["Description"] = $"{t.Name} {t.Season}: bảng xếp hạng, lịch thi đấu – kết quả, vua phá lưới, thẻ phạt.";
+    Layout = "_PublicLayout";
+}
+@section Hero {
+<section class="pv-hero" style="padding-bottom:4.2rem">
+    <div class="container">
+        <nav aria-label="breadcrumb"><ol class="breadcrumb small mb-2">
+            <li class="breadcrumb-item"><a asp-action="Home" class="text-white-50">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-action="Tournaments" class="text-white-50">Giải đấu</a></li>
+            <li class="breadcrumb-item active text-white" aria-current="page">@t.Name @t.Season</li>
+        </ol></nav>
+        <span class="badge badge-season rounded-pill">@t.Type.DisplayName()</span>
+        <h1 class="mt-2">@t.Name <span class="fw-normal" style="color:#a7f3c4">@t.Season</span></h1>
+        <p class="lead mb-0">@(t.Organizer != null ? $"Đơn vị tổ chức: {t.Organizer}" : "")@(t.StartDate.HasValue ? $" · {t.StartDate:dd/MM/yyyy} – {(t.EndDate.HasValue ? t.EndDate.Value.ToString("dd/MM/yyyy") : "đang diễn ra")}" : "")</p>
+    </div>
+</section>
+}
+<div class="pv-kpis">
+    <div class="row g-3">
+        @foreach (var (v, l) in new[] { (Model.MatchesPlayed.ToString(), "Trận đã đá"), (Model.Goals.ToString(), "Bàn thắng"), ((Model.MatchesPlayed > 0 ? (double)Model.Goals / Model.MatchesPlayed : 0).ToString("0.00"), "Bàn / trận"), (Model.YellowCards.ToString(), "Thẻ vàng") })
+        {
+            <div class="col-6 col-lg-3"><div class="pv-kpi"><div class="v">@v</div><div class="l">@l</div></div></div>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(t.Description)) { <p class="mt-4 mb-0">@t.Description</p> }
+
+<section class="pv-section">
+    <div class="pv-title"><h2>Bảng xếp hạng</h2></div>
+    <div class="pv-card"><partial name="_Standings" model="(Model.Standings, true)" /></div>
+</section>
+
+<section class="pv-section">
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="pv-title"><h2>Lịch thi đấu &amp; kết quả</h2></div>
+            <div class="pv-card"><partial name="_Matches" model="(Model.Matches, true)" /></div>
+        </div>
+        <div class="col-lg-6">
+            <div class="pv-title"><h2>Bàn thắng theo đội</h2></div>
+            <div class="pv-card p-3"><div style="height:420px"><canvas id="chTeams" aria-label="Biểu đồ bàn thắng theo đội"></canvas></div></div>
+        </div>
+    </div>
+</section>
+
+<section class="pv-section">
+    <div class="pv-title"><h2>Thống kê cá nhân</h2></div>
+    <partial name="_Boards" model="Model.Leaders" view-data='new ViewDataDictionary(ViewData) { { "BoardId", "tour" } }' />
+</section>
+
+
+@if (Model.RelatedNews.Any())
+{
+    <section class="pv-section">
+        <div class="pv-title"><h2>Tin liên quan</h2></div>
+        <div class="row g-3">@foreach (var n in Model.RelatedNews) { <div class="col-md-6 col-lg-3"><partial name="_NewsCard" model="n" /></div> }</div>
+    </section>
+}
+
+<div class="pv-locked mt-4 d-flex flex-wrap align-items-center gap-3">
+    <i class="bi bi-lock fs-3 text-warning"></i>
+    <div class="flex-grow-1"><b>Phân tích chuyên sâu dành cho HLV / Tuyển trạch viên</b><br /><span class="small text-muted">Xếp hạng theo tiêu chí tùy chỉnh, so sánh cầu thủ, phân vị và gợi ý AI.</span></div>
+    <a asp-controller="Analysis" asp-action="Ranking" asp-route-tournamentId="@t.Id" class="btn btn-success btn-sm">Mở công cụ phân tích</a>
+</div>
+
+@section Scripts {
+    @if (Model.GoalsByTeam.Any())
+    {
+        <partial name="_ChartScripts" />
+        <script>
+            const d = @Html.Raw(Json.Serialize(Model.GoalsByTeam));
+            SV.bar('chTeams', d.map(p => p.label), d.map(p => p.value), { label: 'Bàn thắng', horizontal: true });
+        </script>
+    }
+}

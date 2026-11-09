@@ -1,0 +1,61 @@
+@model PagedList<News>
+@{ ViewData["Title"] = "Quản lý tin tức"; NewsCategory? cat = ViewBag.Category; string? status = ViewBag.Status; }
+<div class="page-header">
+    <h1><i class="bi bi-newspaper text-success"></i> Quản lý tin tức</h1>
+    <div class="d-flex gap-2">
+        <a asp-controller="Portal" asp-action="Home" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Xem trang công khai</a>
+        <a asp-action="Create" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Viết bài mới</a>
+    </div>
+</div>
+<div class="card filter-card mb-3"><div class="card-body">
+    <form method="get" class="row g-2 align-items-end auto-submit">
+        <div class="col-md-5"><label class="form-label">Từ khóa</label><input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tiêu đề, tóm tắt" /></div>
+        <div class="col-md-3"><label class="form-label">Chuyên mục</label>
+            <select name="category" class="form-select" asp-items="EnumExtensions.ToSelectList(cat)"><option value="">-- Tất cả --</option></select></div>
+        <div class="col-md-2"><label class="form-label">Trạng thái</label>
+            <select name="status" class="form-select">
+                <option value="">-- Tất cả --</option>
+                <option value="published" selected="@(status == "published")">Đã xuất bản</option>
+                <option value="draft" selected="@(status == "draft")">Bản nháp</option>
+                <option value="featured" selected="@(status == "featured")">Đang ghim nổi bật</option>
+            </select></div>
+        <div class="col-md-2 d-flex gap-2"><button class="btn btn-success"><i class="bi bi-search"></i></button><a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a></div>
+    </form>
+</div></div>
+<div class="card"><div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+        <thead><tr><th>Tiêu đề</th><th>Chuyên mục</th><th>Ngày đăng</th><th class="text-center">Lượt xem</th><th class="text-center">Nổi bật</th><th class="text-center">Xuất bản</th><th class="text-end">Thao tác</th></tr></thead>
+        <tbody>
+        @foreach (var n in Model)
+        {
+            <tr>
+                <td style="max-width:420px">
+                    <div class="fw-semibold">@n.Title</div>
+                    <div class="small text-muted text-truncate">@n.Summary</div>
+                    @if (n.Tournament != null) { <span class="badge bg-light text-dark border"><i class="bi bi-trophy"></i> @n.Tournament.Name @n.Tournament.Season</span> }
+                </td>
+                <td>@n.Category.DisplayName()</td>
+                <td class="small">@n.PublishedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="text-center">@n.ViewCount</td>
+                <td class="text-center">
+                    <form asp-action="Toggle" asp-route-id="@n.Id" asp-route-field="featured" method="post">
+                        <button class="btn btn-sm @(n.IsFeatured ? "btn-warning" : "btn-outline-secondary")" title="Ghim / bỏ ghim nổi bật"><i class="bi @(n.IsFeatured ? "bi-star-fill" : "bi-star")"></i></button>
+                    </form>
+                </td>
+                <td class="text-center">
+                    <form asp-action="Toggle" asp-route-id="@n.Id" asp-route-field="published" method="post">
+                        <button class="btn btn-sm @(n.IsPublished ? "btn-success" : "btn-outline-secondary")" title="Xuất bản / chuyển về nháp">@(n.IsPublished ? "Công khai" : "Nháp")</button>
+                    </form>
+                </td>
+                <td class="text-end text-nowrap">
+                    @if (n.IsPublished) { <a asp-controller="Portal" asp-action="NewsDetail" asp-route-id="@n.Id" target="_blank" class="btn btn-sm btn-outline-secondary" title="Xem"><i class="bi bi-eye"></i></a> }
+                    <a asp-action="Edit" asp-route-id="@n.Id" class="btn btn-sm btn-outline-primary" title="Sửa"><i class="bi bi-pencil"></i></a>
+                    <a asp-action="Delete" asp-route-id="@n.Id" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="7" class="text-center text-muted py-4">Chưa có bài viết.</td></tr> }
+        </tbody>
+    </table>
+</div></div>
+<partial name="_Pager" model="Model" />

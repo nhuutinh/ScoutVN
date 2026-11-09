@@ -1,0 +1,11 @@
+@model News
+@{ ViewData["Title"] = "Xóa bài viết"; }
+<div class="page-header"><h1 class="text-danger">Xóa bài viết</h1></div>
+<div class="card border-danger"><div class="card-body">
+    <p>Bạn có chắc muốn xóa bài viết <b>@Model.Title</b>? Thao tác này không thể hoàn tác.</p>
+    <form asp-action="Delete" method="post" class="d-flex gap-2">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Xác nhận xóa</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+</div></div>

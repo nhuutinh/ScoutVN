@@ -1,0 +1,25 @@
+@model (string Id, List<LeaderRow> Rows, string Unit, bool ShowMinutes)
+<div class="table-responsive">
+<table class="table table-hover mb-0">
+    <thead><tr><th style="width:50px">#</th><th>Cầu thủ</th><th class="d-none d-md-table-cell">Đội</th><th class="text-center">@(Model.Rows.Any(r => r.Appearances > 0) ? "Trận" : "")</th>
+        @if (Model.ShowMinutes) { <th class="text-center d-none d-sm-table-cell">Phút</th> }
+        <th class="text-end">@Model.Unit</th></tr></thead>
+    <tbody>
+    @for (int i = 0; i < Model.Rows.Count; i++)
+    {
+        var r = Model.Rows[i];
+        <tr>
+            <td><span class="pv-rank @(i < 3 ? "r" + (i + 1) : "")">@(i + 1)</span></td>
+            <td><a asp-controller="Portal" asp-action="Player" asp-route-id="@r.Player.Id" class="fw-semibold text-decoration-none">@r.Player.FullName</a>
+                <span class="pos-badge ms-1">@r.Player.Position</span>
+                <div class="small text-muted d-md-none">@(r.Player.Team?.Name ?? "–")</div></td>
+            <td class="d-none d-md-table-cell">@if (r.Player.Team != null) { <a asp-controller="Portal" asp-action="Team" asp-route-id="@r.Player.TeamId" class="text-reset text-decoration-none">@r.Player.Team.Name</a> } else { <span class="text-muted">@r.Player.Status.DisplayName()</span> }</td>
+            <td class="text-center">@(r.Appearances > 0 ? r.Appearances.ToString() : "")</td>
+            @if (Model.ShowMinutes) { <td class="text-center d-none d-sm-table-cell">@r.Minutes</td> }
+            <td class="text-end"><span class="pv-val">@r.Value</span></td>
+        </tr>
+    }
+    @if (!Model.Rows.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Chưa có dữ liệu.</td></tr> }
+    </tbody>
+</table>
+</div>

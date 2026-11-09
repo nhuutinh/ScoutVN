@@ -1,0 +1,11 @@
+@* Dùng: <partial name="_SortLink" model='("ovr", "OVR")' /> – tạo link sắp xếp giữ nguyên bộ lọc *@
+@model (string Key, string Text)
+@{
+    var current = Context.Request.Query["sort"].ToString();
+    var q = Context.Request.Query
+        .Where(kv => !kv.Key.Equals("sort", StringComparison.OrdinalIgnoreCase) && !kv.Key.Equals("page", StringComparison.OrdinalIgnoreCase))
+        .SelectMany(kv => kv.Value.Select(v => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(v ?? "")}"))
+        .Append($"sort={Model.Key}");
+    var active = current == Model.Key;
+}
+<a class="sort @(active ? "active" : "")" href="@Context.Request.Path?@string.Join("&", q)">@Model.Text @if (active) {<i class="bi bi-caret-down-fill"></i>}</a>

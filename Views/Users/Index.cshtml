@@ -1,0 +1,82 @@
+@model List<AppUser>
+@{ ViewData["Title"] = "Người dùng"; UserRole? role = ViewBag.Role; string? status = ViewBag.Status; int pending = ViewBag.Pending ?? 0;
+   var me = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var myId) ? myId : 0; }
+<div class="page-header">
+    <h1><i class="bi bi-people text-success"></i> Quản lý người dùng</h1>
+    <a asp-action="Create" class="btn btn-success"><i class="bi bi-person-plus"></i> Thêm tài khoản</a>
+</div>
+@if (pending > 0 && status != "pending")
+{
+    <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2">
+        <i class="bi bi-hourglass-split"></i> Có <b>@pending</b> tài khoản đăng ký mới đang chờ phê duyệt.
+        <a asp-action="Index" asp-route-status="pending" class="btn btn-sm btn-warning ms-auto">Xem danh sách chờ duyệt</a>
+    </div>
+}
+<div class="card filter-card mb-3"><div class="card-body">
+    <form method="get" class="row g-2 align-items-end auto-submit">
+        <div class="col-md-4"><label class="form-label">Từ khóa</label><input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tên đăng nhập, họ tên, email" /></div>
+        <div class="col-md-2"><label class="form-label">Vai trò</label>
+            <select name="role" class="form-select" asp-items="EnumExtensions.ToSelectList(role)"><option value="">-- Tất cả --</option></select></div>
+        <div class="col-md-3"><label class="form-label">Trạng thái</label>
+            <select name="status" class="form-select">
+                <option value="">-- Tất cả --</option>
+                <option value="pending" selected="@(status == "pending")">Chờ phê duyệt (@pending)</option>
+                <option value="active" selected="@(status == "active")">Hoạt động</option>
+                <option value="locked" selected="@(status == "locked")">Đã khóa</option>
+            </select></div>
+        <div class="col-md-3 d-flex gap-2"><button class="btn btn-success"><i class="bi bi-search"></i> Tìm</button><a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a></div>
+    </form>
+</div></div>
+<div class="card"><div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+        <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th class="text-end">Thao tác</th></tr></thead>
+        <tbody>
+        @if (!Model.Any())
+        {
+            <tr><td colspan="7" class="text-center text-muted py-4">Không có tài khoản phù hợp.</td></tr>
+        }
+        @foreach (var u in Model)
+        {
+            <tr class="@(u.IsApproved ? "" : "table-warning")">
+                <td class="fw-semibold">@u.Username</td>
+                <td>@u.FullName</td>
+                <td>@(u.Email ?? "-")</td>
+                <td><span class="badge @(u.Role == UserRole.Admin ? "bg-danger" : "bg-success")">@u.Role.DisplayName()</span></td>
+                <td>
+                    @if (!u.IsApproved) { <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Chờ phê duyệt</span> }
+                    else if (u.IsActive) { <span class="text-success"><i class="bi bi-check-circle"></i> Hoạt động</span> }
+                    else { <span class="text-muted"><i class="bi bi-lock"></i> Đã khóa</span> }
+                </td>
+                <td class="small">@u.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="text-end text-nowrap">
+                    @if (!u.IsApproved)
+                    {
+                        <form asp-action="Approve" asp-route-id="@u.Id" method="post" class="d-inline">
+                            <button class="btn btn-sm btn-success" title="Phê duyệt"><i class="bi bi-check-lg"></i> Duyệt</button>
+                        </form>
+                        <form asp-action="Reject" asp-route-id="@u.Id" method="post" class="d-inline" onsubmit="return confirm('Từ chối và xóa yêu cầu đăng ký của @u.Username?');">
+                            <button class="btn btn-sm btn-outline-danger" title="Từ chối"><i class="bi bi-x-lg"></i> Từ chối</button>
+                        </form>
+                    }
+                    else
+                    {
+                        if (u.Id == me)
+                        {
+                            @* Chỉ sửa được thông tin tài khoản của chính mình *@
+                            <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary" title="Sửa thông tin của tôi"><i class="bi bi-pencil"></i></a>
+                            <span class="badge bg-light text-dark border ms-1">Tài khoản của bạn</span>
+                        }
+                        else
+                        {
+                            <form asp-action="ToggleActive" asp-route-id="@u.Id" method="post" class="d-inline">
+                                <button class="btn btn-sm @(u.IsActive ? "btn-outline-warning" : "btn-outline-success")" title="@(u.IsActive ? "Khóa tài khoản" : "Mở khóa tài khoản")">
+                                    <i class="bi @(u.IsActive ? "bi-lock" : "bi-unlock")"></i> @(u.IsActive ? "Khóa" : "Mở khóa")</button>
+                            </form>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div></div>

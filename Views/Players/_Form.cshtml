@@ -1,0 +1,105 @@
+@model Player
+@{ List<string> nations = ViewBag.Nationalities ?? new List<string>(); }
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<input type="hidden" asp-for="Id" />
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">Thông tin cá nhân</div>
+            <div class="card-body row g-3">
+                <div class="col-md-8">
+                    <label asp-for="FullName" class="form-label"></label> <span class="text-danger">*</span>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DateOfBirth" class="form-label"></label> <span class="text-danger">*</span>
+                    <input asp-for="DateOfBirth" class="form-control" />
+                    <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Nationality" class="form-label"></label>
+                    <input asp-for="Nationality" class="form-control" list="nationList" />
+                    <datalist id="nationList">@foreach (var n in nations) { <option value="@n"></option> }</datalist>
+                    <span asp-validation-for="Nationality" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Hometown" class="form-label"></label>
+                    <input asp-for="Hometown" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PreferredFoot" class="form-label"></label>
+                    <select asp-for="PreferredFoot" class="form-select" asp-items="EnumExtensions.ToSelectList<PreferredFoot>()"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="HeightCm" class="form-label"></label>
+                    <input asp-for="HeightCm" class="form-control" />
+                    <span asp-validation-for="HeightCm" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="WeightKg" class="form-label"></label>
+                    <input asp-for="WeightKg" class="form-control" />
+                    <span asp-validation-for="WeightKg" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PhotoUrl" class="form-label"></label>
+                    <input asp-for="PhotoUrl" class="form-control" placeholder="https://..." />
+                    <span asp-validation-for="PhotoUrl" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header">Thông tin thi đấu</div>
+            <div class="card-body row g-3">
+                <div class="col-md-8">
+                    <label asp-for="TeamId" class="form-label"></label>
+                    <select asp-for="TeamId" class="form-select" asp-items="ViewBag.Teams">
+                        <option value="">-- Chưa có đội (tự do) --</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ShirtNumber" class="form-label"></label>
+                    <input asp-for="ShirtNumber" class="form-control" />
+                    <span asp-validation-for="ShirtNumber" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Position" class="form-label"></label>
+                    <select asp-for="Position" class="form-select" asp-items="EnumExtensions.ToSelectList<Position>()"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" class="form-select" asp-items="EnumExtensions.ToSelectList<PlayerStatus>()"></select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="MarketValue" class="form-label"></label>
+                    <input asp-for="MarketValue" class="form-control" />
+                    <span asp-validation-for="MarketValue" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">Chỉ số năng lực (1 – 100) <span class="text-muted small fw-normal">– dùng cho phân tích và thuật toán KNN gợi ý cầu thủ</span></div>
+            <div class="card-body row g-3">
+                @foreach (var field in new[] { "Pace", "Shooting", "Passing", "Dribbling", "Defending", "Physical" })
+                {
+                    <div class="col-md-4">
+                        <label for="@field" class="form-label d-flex justify-content-between">
+                            @Html.DisplayName(field) <b id="out_@field"></b>
+                        </label>
+                        <input type="range" class="form-range" min="1" max="100" name="@field" id="@field"
+                               value="@(typeof(Player).GetProperty(field)!.GetValue(Model))" data-output="out_@field" />
+                        @Html.ValidationMessage(field, null, new { @class = "text-danger small" })
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Nhận xét chuyên môn, điểm mạnh/yếu..."></textarea>
+    </div>
+</div>

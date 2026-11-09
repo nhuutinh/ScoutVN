@@ -1,0 +1,78 @@
+@model TeamIndexViewModel
+@{ ViewData["Title"] = "Đội bóng"; var isAdmin = User.IsInRole("Admin"); }
+<div class="page-header">
+    <h1><i class="bi bi-shield-shaded text-success"></i> Đội bóng</h1>
+    @if (isAdmin) { <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm đội bóng</a> }
+</div>
+
+<div class="card filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end auto-submit">
+            <div class="col-md-5">
+                <label class="form-label">Từ khóa (tên đội, viết tắt, sân)</label>
+                <input name="keyword" value="@Model.Keyword" class="form-control" placeholder="VD: Hà Nội, HAGL, Lạch Tray..." />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tỉnh / Thành phố</label>
+                <select name="city" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var c in Model.Cities) { <option value="@c" selected="@(c == Model.City)">@c</option> }
+                </select>
+            </div>
+            <input type="hidden" name="sort" value="@Model.Sort" />
+            <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-success"><i class="bi bi-search"></i> Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th><partial name="_SortLink" model='("name", "Tên đội")' /></th>
+                <th><partial name="_SortLink" model='("city", "Tỉnh / TP")' /></th>
+                <th>Sân nhà</th>
+                <th class="text-center"><partial name="_SortLink" model='("players", "Số cầu thủ")' /></th>
+                <th class="text-center">Ngoại binh</th>
+                <th class="text-center"><partial name="_SortLink" model='("ovr", "Chỉ số TB")' /></th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Teams)
+            {
+                var t = item.Team;
+                <tr>
+                    <td class="text-nowrap">
+                        <partial name="_TeamCrest" model="t" />
+                        <a asp-action="Details" asp-route-id="@t.Id" class="fw-semibold ms-2">@t.Name</a>
+                        @if (!string.IsNullOrEmpty(t.ShortName)) { <span class="text-muted small">(@t.ShortName)</span> }
+                    </td>
+                    <td>@t.City</td>
+                    <td>@(t.Stadium ?? "-")</td>
+                    <td class="text-center">@item.PlayerCount</td>
+                    <td class="text-center">@item.ForeignCount</td>
+                    <td class="text-center"><span class="ovr badge @RatingHelper.BadgeClass((int)Math.Round(item.AverageOverall))">@item.AverageOverall.ToString("0.0")</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Details" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary" title="Xem"><i class="bi bi-eye"></i></a>
+                        @if (isAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-outline-primary" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <a asp-action="Delete" asp-route-id="@t.Id" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Teams.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy đội bóng phù hợp.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+<partial name="_Pager" model="Model.Teams" />

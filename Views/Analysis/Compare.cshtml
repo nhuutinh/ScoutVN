@@ -1,0 +1,130 @@
+@model CompareViewModel
+@{
+    ViewData["Title"] = "So sánh cầu thủ";
+    var rows = Model.Rows;
+    var attrKeys = Metrics.Attributes.Append("ovr").ToArray();
+    var palette = new[] { "#2a78d6", "#eb6834", "#1baf7a", "#eda100" };
+    var marks = new[] { "●", "■", "▲", "◆" };
+    // Ô tốt nhất mỗi hàng được tô đậm
+    string Best(MetricDef m, PlayerRow r)
+    {
+        var vals = rows.Select(x => m.Value(x)).Where(v => v.HasValue).Select(v => v!.Value).ToList();
+        var v = m.Value(r);
+        if (!v.HasValue || vals.Count < 2) return "";
+        var best = m.HigherIsBetter ? vals.Max() : vals.Min();
+        return Math.Abs(v.Value - best) < 1e-9 && vals.Distinct().Count() > 1 ? "fw-bold text-success" : "";
+    }
+}
+<div class="page-header">
+    <h1><i class="bi bi-arrow-left-right text-success"></i> So sánh cầu thủ</h1>
+    @if (rows.Count >= 2)
+    {
+        <a href="@(Context.Request.Path + Context.Request.QueryString + (Context.Request.QueryString.HasValue ? "&" : "?") + "format=csv")" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-spreadsheet"></i> Xuất Excel (CSV)</a>
+    }
+</div>
+
+<partial name="_PlayerPickData" model="Model.Picks" />
+<form method="get" class="card filter-card mb-3"><div class="card-body row g-2 align-items-end">
+    @for (int i = 0; i < 4; i++)
+    {
+        int? sel = i < Model.Ids.Length ? Model.Ids[i] : null;
+        var selName = sel.HasValue && Model.Names.TryGetValue(sel.Value, out var nm) ? nm : null;
+        <div class="col-md-6 col-xl-3">
+            <label class="form-label"><span style="color:@palette[i]">@marks[i]</span> Cầu thủ @(i + 1)@(i < 2 ? " *" : "")</label>
+            <partial name="_PlayerPicker" model='("ids", sel, selName, "Gõ tên, VD: Quang Hải", false)' />
+        </div>
+    }
+    <div class="col-md-6 col-xl-4"><partial name="_ScopeSelect" model="Model.Tournaments" /></div>
+    <div class="col-md-6 col-xl-8 d-flex gap-2">
+        <button class="btn btn-success"><i class="bi bi-arrow-left-right"></i> So sánh</button>
+        <a asp-action="Compare" class="btn btn-outline-secondary">Chọn lại</a>
+        <span class="small text-muted align-self-center">Gõ vài chữ của tên (có dấu hoặc không dấu) rồi chọn trong danh sách.</span>
+    </div>
+</div></form>
+
+@if (Model.Message != null) { <div class="alert alert-info">@Model.Message</div> }
+
+@if (rows.Count == 0)
+{
+    <div class="text-center text-muted py-5"><i class="bi bi-people" style="font-size:2.5rem"></i><p class="mt-2">Chọn từ 2 đến 4 cầu thủ để so sánh chỉ số năng lực và hiệu suất thi đấu.<br />Mẹo: tick chọn cầu thủ ở trang <a asp-controller="Players" asp-action="Index">Danh sách cầu thủ</a> rồi bấm “So sánh”.</p></div>
+}
+else
+{
+    <div class="sv-paged">
+    <section class="sv-page" data-title="Biểu đồ so sánh">
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card h-100"><div class="card-header">Chỉ số năng lực</div>
+                <div class="card-body"><div style="height:360px"><canvas id="chRadar" aria-label="Radar so sánh chỉ số năng lực"></canvas></div></div></div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card h-100"><div class="card-header">Mức độ được sử dụng (%) – @Model.ScopeName</div>
+                <div class="card-body"><div style="height:360px"><canvas id="chPer90" aria-label="Biểu đồ so sánh tỉ lệ thời gian thi đấu, đá chính"></canvas></div></div></div>
+        </div>
+    </div>
+    </section>
+    <section class="sv-page" data-title="Bảng so sánh chi tiết">
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Bảng so sánh chi tiết <span class="text-muted small fw-normal">– giá trị tốt nhất mỗi dòng được tô <b class="text-success">xanh đậm</b></span></div>
+                <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+                    <thead><tr><th style="width:240px">Tiêu chí</th>
+                        @for (int i = 0; i < rows.Count; i++)
+                        {
+                            var r = rows[i];
+                            <th class="text-center" style="text-transform:none;font-size:.9rem"><span style="color:@palette[i]">@marks[i]</span>
+                                <a asp-action="Player" asp-route-id="@r.Player.Id" asp-route-tournamentId="@Model.TournamentId">@r.Player.FullName</a></th>
+                        }
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="text-muted">Đội bóng</td>@foreach (var r in rows) { <td class="text-center">@(r.Player.Team?.Name ?? "Tự do")</td> }</tr>
+                        <tr><td class="text-muted">Vị trí</td>@foreach (var r in rows) { <td class="text-center">@r.Player.Position.DisplayName()</td> }</tr>
+                        <tr><td class="text-muted">Tuổi / Chiều cao</td>@foreach (var r in rows) { <td class="text-center">@r.Player.Age tuổi / @(r.Player.HeightCm?.ToString() ?? "?") cm</td> }</tr>
+                        <tr><td class="text-muted">Chân thuận</td>@foreach (var r in rows) { <td class="text-center">@r.Player.PreferredFoot.DisplayName()</td> }</tr>
+                        <tr><td class="text-muted">Giá trị ước tính</td>@foreach (var r in rows) { <td class="text-center">@ScoutVN.Services.Fmt.Money(r.Player.MarketValue, false)</td> }</tr>
+                        <tr class="table-light"><td colspan="@(rows.Count + 1)" class="fw-semibold small text-uppercase">Chỉ số năng lực <span class="badge badge-est text-none">ước tính</span></td></tr>
+                        @foreach (var key in attrKeys)
+                        {
+                            var m = Metrics.Find(key)!;
+                            <tr><td>@m.Name@(key == "pace" ? " (≈ km/h tối đa)" : "")</td>@foreach (var r in rows) { <td class="text-center @Best(m, r)">@m.Display(m.Value(r))@if (key == "pace") { <span class="text-muted small"> · ≈ @PlayerInsights.PaceKmh(r.Player.Pace).ToString("0.0") km/h</span> }</td> }</tr>
+                        }
+                        <tr><td>Phút / trận</td>@foreach (var r in rows) { <td class="text-center">@(r.Stat != null && r.Stat.Appearances > 0 ? (r.Stat.Minutes / (double)r.Stat.Appearances).ToString("0") : "–")</td> }</tr>
+                        <tr class="table-light"><td colspan="@(rows.Count + 1)" class="fw-semibold small text-uppercase">Thi đấu – @Model.ScopeName</td></tr>
+                        <tr><td>Số trận / đá chính</td>@foreach (var r in rows) { <td class="text-center">@(r.Stat == null || r.Stat.Appearances == 0 ? "–" : $"{r.Stat.Appearances} / {r.Stat.Starts}")</td> }</tr>
+                        <tr><td>Thẻ vàng / đỏ</td>@foreach (var r in rows) { <td class="text-center">@(r.Stat == null ? "–" : $"{r.Stat.YellowCards} / {r.Stat.RedCards}")</td> }</tr>
+                        @foreach (var key in Model.StatMetricKeys)
+                        {
+                            var m = Metrics.Find(key)!;
+                            <tr><td>@m.Name</td>@foreach (var r in rows) { <td class="text-center @Best(m, r)">@m.Display(m.Value(r))</td> }</tr>
+                        }
+                    </tbody>
+                </table></div>
+            </div>
+        </div>
+    </div>
+    </section>
+    </div>
+}
+
+@section Scripts {
+    @if (rows.Count > 0)
+    {
+        <partial name="_ChartScripts" />
+        <script>
+            const d = @Html.Raw(Json.Serialize(new {
+                players = rows.Select(r => new {
+                    name = r.Player.FullName,
+                    attrs = new[] { r.Player.Pace, r.Player.Shooting, r.Player.Passing, r.Player.Dribbling, r.Player.Defending, r.Player.Physical },
+                    per90 = (Model.StatMetricKeys.Contains("csrate") ? new[] { "minshare", "startrate", "csrate" } : new[] { "minshare", "startrate" })
+                        .Select(k => Math.Round(Metrics.Find(k)!.Value(r) ?? 0, 1)).ToArray()
+                }),
+                per90Labels = (Model.StatMetricKeys.Contains("csrate") ? new[] { "minshare", "startrate", "csrate" } : new[] { "minshare", "startrate" })
+                    .Select(k => Metrics.Find(k)!.Name).ToArray()
+            }));
+            SV.radar('chRadar', ['Tốc độ', 'Dứt điểm', 'Chuyền bóng', 'Rê bóng', 'Phòng ngự', 'Thể lực'],
+                d.players.map(p => ({ name: p.name, values: p.attrs })));
+            SV.groupedBar('chPer90', d.per90Labels, d.players.map(p => ({ name: p.name, values: p.per90 })), { decimals: 1, max: 100 });
+        </script>
+    }
+}

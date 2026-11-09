@@ -1,0 +1,153 @@
+@model RankingViewModel
+@{
+    ViewData["Title"] = "Xếp hạng cầu thủ theo tiêu chí";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var needNames = Model.Needs.Select(k => ScoutVN.Services.CoachNeeds.Find(k)?.Name).Where(n => n != null).ToList();
+    var tags = Model.Filter.Describe();
+}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-sort-down text-success"></i> Xếp hạng cầu thủ theo tiêu chí</h1>
+        <div class="small text-muted">Chấm điểm 0–100 và xếp <b>cao xuống thấp</b> theo các tiêu chí HLV chọn (càng nổi trội càng cao điểm).</div>
+    </div>
+    @if (Model.Results.Any())
+    {
+        <a href="@(Context.Request.Path + Context.Request.QueryString + (Context.Request.QueryString.HasValue ? "&" : "?") + "format=csv")" class="btn btn-outline-secondary btn-sm export-btn"><i class="bi bi-file-earmark-spreadsheet"></i> Xuất Excel (CSV)</a>
+    }
+</div>
+
+@{ var go = Context.Request.Query.ContainsKey("go"); }
+<div class="sv-paged" data-start="@(go && !Model.NeedsMissing ? 2 : 1)">
+<section class="sv-page" data-title="Chọn tiêu chí &amp; điều kiện">
+<form method="get" action="/Analysis/Ranking" class="auto-form card filter-card mb-3"><div class="card-body">
+<input type="hidden" name="go" value="1" />
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3 col-xl-2">
+            <label class="form-label small">Vị trí</label>
+            <select name="group" class="form-select form-select-sm">
+                <option value="">Tất cả vị trí</option>
+                @foreach (var g in Enum.GetValues<PositionGroup>()) { <option value="@g" selected="@(Model.Group == g)">@PositionGroups.Name(g)</option> }
+            </select>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label small">Mùa giải</label>
+            <select name="tournamentId" class="form-select form-select-sm" asp-items="Model.Tournaments"></select></div>
+        <div class="col-6 col-md-3 col-xl-2">
+            <label class="form-label small">Đội bóng</label>
+            <select name="teamId" class="form-select form-select-sm" asp-items="Model.Teams">
+                <option value="">Tất cả đội</option>
+                <option value="0" selected="@(Model.TeamId == 0)">(Cầu thủ tự do)</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label small">Đã thi đấu tối thiểu</label>
+            <select name="minMinutes" class="form-select form-select-sm">
+                @foreach (var m in new[] { 0, 90, 180, 270, 360, 450 }) { <option value="@m" selected="@(Model.MinMinutes == m)">@(m == 0 ? "Không yêu cầu" : $"{m} phút")</option> }
+            </select></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label small">Số kết quả</label>
+            <select name="top" class="form-select form-select-sm">@foreach (var n in new[] { 10, 20, 50, 100 }) { <option value="@n" selected="@(Model.Top == n)">Top @n</option> }</select></div>
+    </div>
+    <partial name="_NeedPicker" model="(Model.Needs, Model.Filter, Model.Group, Model.NeedsMissing)" />
+    <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+        <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-sort-down"></i> Xếp hạng</button>
+        <a asp-action="Ranking" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Bỏ lọc</a>
+        <span class="small text-muted">Chọn xong bấm <b>Xếp hạng</b> để chuyển sang trang kết quả.</span>
+    </div>
+</div></form>
+</section>
+
+<section class="sv-page" data-title="Kết quả xếp hạng" id="ket-qua">
+@if (!go)
+{
+    <div class="alert alert-light border text-center py-4 empty-result"><i class="bi bi-ui-checks-grid fs-3 d-block mb-2 text-success"></i>Chưa có kết quả. Hãy chọn <b>ít nhất một tiêu chí</b> ở phần 1 rồi bấm <b>Xếp hạng</b>.</div>
+}
+else if (Model.NeedsMissing)
+{
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Hãy chọn <b>ít nhất một tiêu chí</b> ở phần 1 rồi bấm lại.</div>
+}
+else
+{
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-2 filter-tags">
+    <h2 class="h5 mb-0 me-2">Kết quả xếp hạng</h2>
+    <span class="badge bg-light text-dark border">@(Model.Group.HasValue ? PositionGroups.Name(Model.Group.Value) : "Mọi vị trí")</span>
+    @foreach (var n in needNames) { <span class="badge tag-need"><i class="bi bi-check2"></i> @n</span> }
+    @foreach (var t in tags) { <span class="badge bg-light text-dark border">@t</span> }
+</div>
+<div class="small text-muted mb-2">
+    @Model.ScopeName · @Model.PoolSize cầu thủ đạt điều kiện
+    @if (Model.ExcludedByFilter > 0) { <span>· loại @Model.ExcludedByFilter cầu thủ không đạt điều kiện lọc</span> }
+    @if (Model.ExcludedForMinutes > 0) { <span>· @Model.ExcludedForMinutes cầu thủ chưa đủ @Model.MinMinutes phút</span> }
+    · Điểm phù hợp (0–100) cộng dồn theo các tiêu chí đã chọn
+</div>
+
+if (!Model.Results.Any())
+{
+    <div class="alert alert-light border">Không có cầu thủ đạt các điều kiện này. Hãy hạ chiều cao / tốc độ yêu cầu, nới độ tuổi hoặc giảm số phút tối thiểu.</div>
+}
+else
+{
+    <div class="card mb-3"><div class="table-responsive"><table class="table table-hover mb-0 align-middle small" data-page-size="8">
+        <thead><tr>
+            <th>#</th><th>Cầu thủ</th><th>Đội</th><th class="text-center">Tuổi</th><th style="min-width:130px">Điểm phù hợp</th>
+            @foreach (var c in Model.Columns) { <th class="text-center" style="text-transform:none">@c.Header</th> }
+            <th></th>
+        </tr></thead>
+        <tbody>
+        @for (int i = 0; i < Model.Results.Count; i++)
+        {
+            var r = Model.Results[i]; var p = r.Row.Player;
+            <tr>
+                <td class="fw-bold text-nowrap"><input type="checkbox" class="form-check-input cmp-pick me-1" value="@p.Id" checked="@(i < 4)" title="Chọn để so sánh" />@(i + 1)</td>
+                <td class="text-nowrap"><a asp-controller="Players" asp-action="Details" asp-route-id="@p.Id">@p.FullName</a> <span class="pos-badge">@p.Position</span></td>
+                <td>@(p.Team?.ShortName ?? "Tự do")</td>
+                <td class="text-center">@p.Age</td>
+                <td><div class="d-flex align-items-center gap-2"><div class="progress flex-grow-1" style="height:.5rem"><div class="progress-bar bg-success" style="width:@r.Score.ToString(inv)%"></div></div><b>@r.Score.ToString("0")</b></div></td>
+                @foreach (var c in Model.Columns)
+                {
+                    var n = r.Normalized.TryGetValue(c.Key, out var nv) ? nv : (double?)null;
+                    <td class="text-center text-nowrap" style="background:rgba(42,120,214,@(((n ?? 0) * 0.25).ToString("0.00", inv)))">@c.Show(r.Row)</td>
+                }
+                <td class="text-nowrap">
+                    <a asp-action="Player" asp-route-id="@p.Id" asp-route-tournamentId="@Model.TournamentId" class="btn btn-sm btn-link p-0" title="Phân tích"><i class="bi bi-graph-up"></i></a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table></div></div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="small text-muted">Ô càng đậm màu xanh = càng nổi trội ở tiêu chí đó so với các cầu thủ đạt điều kiện.</div>
+        <div class="cmp-bar d-flex flex-wrap align-items-center gap-2" data-tid="@Model.TournamentId" data-fixed="" data-max="4">
+                <span class="small text-muted">Đã chọn <b class="cmp-count">0</b>/4 cầu thủ để so sánh</span>
+                <button type="button" class="btn btn-success btn-sm cmp-go"><i class="bi bi-arrow-left-right"></i> So sánh cầu thủ đã chọn</button>
+            </div>
+    </div>
+}
+}
+</section>
+
+<section class="sv-page" data-title="Biểu đồ" id="bieu-do">
+@if (Model.Results.Any())
+{
+    <div class="card"><div class="card-header">Top 10 điểm phù hợp</div>
+        <div class="card-body"><div style="height:380px"><canvas id="chRank" aria-label="Biểu đồ top 10 điểm xếp hạng"></canvas></div></div></div>
+}
+else
+{
+    <div class="alert alert-light border text-center py-4"><i class="bi bi-bar-chart fs-3 d-block mb-2 text-success"></i>Chưa có kết quả để vẽ biểu đồ. Hãy chọn tiêu chí ở phần 1 rồi bấm <b>Xếp hạng</b>.</div>
+}
+</section>
+</div>
+
+<template id="emptyResult"><div class="alert alert-light border text-center py-4 empty-result"><i class="bi bi-ui-checks-grid fs-3 d-block mb-2 text-success"></i>Chưa có kết quả. Hãy chọn <b>ít nhất một tiêu chí</b> ở phần 1 rồi bấm <b>Xếp hạng</b>.</div></template>
+
+@section Scripts {
+    <partial name="_ChartScripts" />
+    <script>
+        @if (Model.Results.Any())
+        {
+            <text>
+            const topRows = @Html.Raw(Json.Serialize(Model.Results.Take(10).Select(r => new { name = r.Row.Player.FullName, score = r.Score, id = r.Row.Player.Id })));
+            SV.bar('chRank', topRows.map(x => x.name), topRows.map(x => x.score), { label: 'Điểm phù hợp', decimals: 1, max: 100, horizontal: true, links: topRows.map(x => '/Analysis/Player/' + x.id + '?tournamentId=@Model.TournamentId') });
+            </text>
+        }
+    </script>
+}

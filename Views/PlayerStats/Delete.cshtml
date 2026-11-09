@@ -1,0 +1,12 @@
+@model PlayerStat
+@{ ViewData["Title"] = "Xóa thống kê"; }
+<div class="page-header"><h1 class="text-danger">Xóa thống kê thi đấu</h1></div>
+<div class="card border-danger"><div class="card-body">
+    <p>Xóa thống kê của <b>@Model.Player?.FullName</b> tại giải <b>@Model.Tournament?.Name @Model.Tournament?.Season</b>
+        (@Model.Appearances trận, @Model.Goals bàn thắng, @Model.YellowCards thẻ vàng)?</p>
+    <form asp-action="Delete" method="post" class="d-flex gap-2">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Xác nhận xóa</button>
+        <a asp-controller="Players" asp-action="Details" asp-route-id="@Model.PlayerId" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+</div></div>

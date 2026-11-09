@@ -1,0 +1,56 @@
+@model PortalTeamViewModel
+@{
+    var t = Model.Team;
+    ViewData["Title"] = t.Name;
+    Layout = "_PublicLayout";
+    var squad = Model.Squad;
+    var withStats = squad.Where(r => r.Stat != null).ToList();
+}
+<section class="pv-section">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-action="Home">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="Teams">Đội bóng</a></li>
+        <li class="breadcrumb-item active">@t.Name</li>
+    </ol></nav>
+    <div class="pv-card p-4 mb-3 d-flex flex-wrap align-items-center gap-4">
+        <div class="pv-crest lg">@if (!string.IsNullOrEmpty(t.LogoUrl)) { <img src="@t.LogoUrl" alt="" /> } else { @PortalHelper.Initials(t.ShortName, t.Name) }</div>
+        <div class="flex-grow-1">
+            <h1 class="h3 fw-bold mb-1">@t.Name</h1>
+            <div class="text-muted">@t.City@(t.Stadium != null ? " · Sân nhà: " + t.Stadium : "")@(t.FoundedYear != null ? " · Thành lập " + t.FoundedYear : "")@(t.HeadCoach != null ? " · HLV: " + t.HeadCoach : "")</div>
+            @if (!string.IsNullOrEmpty(t.Description)) { <div class="small mt-1">@t.Description</div> }
+        </div>
+        <div class="d-flex gap-4 text-center">
+            @if (Model.Value != null)
+            {
+                <div><div class="h4 fw-bold mb-0 text-success"><partial name="_ClubValue" model="Model.Value" /></div><div class="small text-muted">định giá CLB</div></div>
+            }
+            <div><div class="h4 fw-bold mb-0">@squad.Count</div><div class="small text-muted">cầu thủ</div></div>
+            <div><div class="h4 fw-bold mb-0">@(squad.Any() ? squad.Average(r => r.Player.Age).ToString("0.0") : "–")</div><div class="small text-muted">tuổi TB</div></div>
+            <div><div class="h4 fw-bold mb-0">@withStats.Sum(r => r.Stat!.Goals)</div><div class="small text-muted">bàn @(Model.League != null ? Model.League.Season : "")</div></div>
+        </div>
+    </div>
+    <div class="pv-card">
+        <div class="p-3 fw-bold border-bottom">Đội hình @(Model.League != null ? $"· số liệu {Model.League.Name} {Model.League.Season}" : "")</div>
+        <div class="table-responsive"><table class="table table-hover mb-0 align-middle">
+            <thead class="small text-uppercase text-muted"><tr><th>Số</th><th>Cầu thủ</th><th>Vị trí</th><th class="text-center">Tuổi</th><th class="d-none d-md-table-cell">Quốc tịch</th><th class="text-center">Trận</th><th class="text-center d-none d-sm-table-cell">Phút</th><th class="text-center">Bàn</th><th class="text-center">Thẻ</th></tr></thead>
+            <tbody>
+            @foreach (var r in squad)
+            {
+                var p = r.Player;
+                <tr>
+                    <td class="text-muted">@p.ShirtNumber</td>
+                    <td><a asp-action="Player" asp-route-id="@p.Id" class="fw-semibold text-decoration-none">@p.FullName</a>
+                        @if (p.Status == PlayerStatus.Injured) { <span class="badge bg-danger ms-1">Chấn thương</span> }</td>
+                    <td><span class="pos-badge" title="@p.Position.DisplayName()">@p.Position</span></td>
+                    <td class="text-center">@p.Age</td>
+                    <td class="d-none d-md-table-cell">@p.Nationality</td>
+                    <td class="text-center">@(r.Stat?.Appearances > 0 ? r.Stat.Appearances.ToString() : "–")</td>
+                    <td class="text-center d-none d-sm-table-cell">@(r.Stat?.Minutes > 0 ? r.Stat.Minutes.ToString() : "–")</td>
+                    <td class="text-center fw-semibold">@(r.Stat?.Goals.ToString() ?? "–")</td>
+                    <td class="text-center">@(r.Stat == null ? "–" : $"{r.Stat.YellowCards}/{r.Stat.RedCards}")</td>
+                </tr>
+            }
+            </tbody>
+        </table></div>
+    </div>
+</section>

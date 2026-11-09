@@ -1,0 +1,23 @@
+@model List<TeamCard>
+@{ ViewData["Title"] = "Đội bóng"; Layout = "_PublicLayout"; }
+<section class="pv-section">
+    <div class="pv-title"><h2>Đội bóng</h2></div>
+    <div class="row g-3">
+        @foreach (var t in Model)
+        {
+            <div class="col-sm-6 col-lg-4 col-xl-3">
+                <a class="pv-card d-block" asp-action="Team" asp-route-id="@t.Team.Id">
+                    <div class="pv-team">
+                        <div class="pv-crest">@if (!string.IsNullOrEmpty(t.Team.LogoUrl)) { <img src="@t.Team.LogoUrl" alt="" /> } else { @PortalHelper.Initials(t.Team.ShortName, t.Team.Name) }</div>
+                        <div class="min-w-0"><div class="fw-bold">@t.Team.Name</div><div class="small text-muted">@t.Team.City@(t.Team.Stadium != null ? " · Sân " + t.Team.Stadium : "")</div></div>
+                    </div>
+                    <div class="d-flex border-top text-center small">
+                        <div class="flex-fill py-2"><b class="d-block fs-6">@t.Players</b>cầu thủ</div>
+                        <div class="flex-fill py-2 border-start"><b class="d-block fs-6">@t.AvgOverall.ToString("0.0")</b>Chỉ số TB</div>
+                        <div class="flex-fill py-2 border-start"><b class="d-block fs-6">@t.Goals</b>bàn mùa này</div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+</section>

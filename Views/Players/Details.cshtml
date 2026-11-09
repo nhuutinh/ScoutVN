@@ -1,0 +1,115 @@
+@model Player
+@{
+    ViewData["Title"] = Model.FullName;
+    var isAdmin = User.IsInRole("Admin");
+    var attrs = new[]
+    {
+        ("Tốc độ", Model.Pace), ("Dứt điểm", Model.Shooting), ("Chuyền bóng", Model.Passing),
+        ("Rê bóng", Model.Dribbling), ("Phòng ngự", Model.Defending), ("Thể lực", Model.Physical)
+    };
+    var stats = Model.Stats.OrderByDescending(s => s.Tournament?.Season).ToList();
+    var gk = Model.Position == Position.GK;
+}
+<div class="page-header">
+    <h1>Hồ sơ cầu thủ</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Danh sách</a>
+        <a asp-controller="Analysis" asp-action="Player" asp-route-id="@Model.Id" class="btn btn-success btn-sm"><i class="bi bi-graph-up"></i> Phân tích hiệu suất</a>
+        <a asp-controller="Analysis" asp-action="Compare" asp-route-ids="@Model.Id" class="btn btn-outline-success btn-sm"><i class="bi bi-arrow-left-right"></i> So sánh</a>
+        @if (isAdmin)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Sửa</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Xóa</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4 d-flex flex-column">
+        <div class="card mb-3 player-side">
+            <div class="card-body text-center">
+                <partial name="_PlayerAvatar" model="Model" view-data='new ViewDataDictionary(ViewData) { { "Large", true } }' />
+                <h2 class="h4 mt-3 mb-1">@Model.FullName</h2>
+                <div class="text-muted">
+                    @if (Model.Team != null) { <a asp-controller="Teams" asp-action="Details" asp-route-id="@Model.TeamId">@Model.Team.Name</a> }
+                    else { <span>@(Model.Status == PlayerStatus.LeftLeague ? "Đã rời V.League" : "Chưa có đội (tự do)")</span> }
+                    @if (Model.ShirtNumber.HasValue) { <span> · Số @Model.ShirtNumber</span> }
+                </div>
+                <div class="my-3 d-flex justify-content-center gap-2 align-items-center">
+                    <span class="pos-badge fs-6">@Model.Position.DisplayName()</span>
+                    <span class="ovr badge fs-5 @RatingHelper.BadgeClass(Model.Overall)" title="Chỉ số tổng@(Model.AttributesEstimated ? " (ước tính)" : "")">@Model.Overall</span>
+                </div>
+                <span class="badge @(Model.Status == PlayerStatus.Active ? "bg-success" : Model.Status == PlayerStatus.Injured ? "bg-danger" : "bg-secondary")">@Model.Status.DisplayName()</span>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Ngày sinh</span><span>@Model.DateOfBirth.ToString("dd/MM/yyyy") (@Model.Age tuổi)</span></li>
+                <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Quốc tịch</span><span>@Model.Nationality</span></li>
+                @if (!string.IsNullOrEmpty(Model.Hometown)) { <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Quê quán</span><span>@Model.Hometown</span></li> }
+                <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Chiều cao</span><span>@(Model.HeightCm.HasValue ? Model.HeightCm + " cm" : "–")</span></li>
+                <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Chân thuận</span><span>@Model.PreferredFoot.DisplayName()</span></li>
+                <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Giá trị chuyển nhượng</span><span>@ScoutVN.Services.Fmt.Money(Model.MarketValue)</span></li>
+                @if (Model.SourceId.HasValue) { <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Nguồn dữ liệu</span><span>FotMob #@Model.SourceId</span></li> }
+                <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Cập nhật</span><span>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center"><span>Chỉ số chi tiết</span></div>
+            <div class="card-body">
+                <partial name="_AttrInsights" model="((List<AttrInsight>)ViewBag.Insights, Model)" />
+                @if (!string.IsNullOrEmpty(Model.Notes)) { <hr /><div class="small"><b>Ghi chú:</b> @Model.Notes</div> }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Thống kê thi đấu theo giải</span>
+                @if (isAdmin) { <a asp-controller="PlayerStats" asp-action="Create" asp-route-playerId="@Model.Id" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Thêm thống kê</a> }
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 small">
+                    <thead>
+                    <tr>
+                        <th>Giải đấu</th><th>Đội</th><th class="text-center">Trận</th><th class="text-center">Đá chính</th><th class="text-center">Phút</th>
+                        <th class="text-center">Bàn</th><th class="text-center">Phạt đền</th><th class="text-center">Bàn/90'</th>
+                        @if (gk) { <th class="text-center">Sạch lưới</th><th class="text-center">Thủng lưới</th> }
+                        <th class="text-center">Thẻ</th>
+                        @if (isAdmin) { <th></th> }
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var s in stats)
+                    {
+                        var d = s.Tournament?.HasMatchDetails ?? true;
+                        <tr>
+                            <td><a asp-controller="Tournaments" asp-action="Details" asp-route-id="@s.TournamentId">@s.Tournament?.Name @s.Tournament?.Season</a></td>
+                            <td>@(s.Team?.ShortName ?? "–")</td>
+                            <td class="text-center">@(d ? s.Appearances : "–")</td>
+                            <td class="text-center">@(d ? s.Starts : "–")</td>
+                            <td class="text-center">@(d ? s.MinutesPlayed : "–")</td>
+                            <td class="text-center fw-bold">@s.Goals</td>
+                            <td class="text-center">@(s.PenaltyGoals?.ToString() ?? "–")</td>
+                            <td class="text-center">@(s.GoalsPer90?.ToString("0.00") ?? "–")</td>
+                            @if (gk) { <td class="text-center">@(d ? s.CleanSheets : "–")</td><td class="text-center">@(d ? s.GoalsConceded : "–")</td> }
+                            <td class="text-center"><span class="text-warning">■</span>@s.YellowCards <span class="text-danger">■</span>@s.RedCards</td>
+                            @if (isAdmin)
+                            {
+                                <td class="text-nowrap">
+                                    <a asp-controller="PlayerStats" asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-link p-0" title="Sửa"><i class="bi bi-pencil"></i></a>
+                                    <a asp-controller="PlayerStats" asp-action="Delete" asp-route-id="@s.Id" class="btn btn-sm btn-link p-0 text-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                                </td>
+                            }
+                        </tr>
+                    }
+                    @if (!stats.Any())
+                    {
+                        <tr><td colspan="13" class="text-center text-muted py-3">Chưa có dữ liệu thống kê.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

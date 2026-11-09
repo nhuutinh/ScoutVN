@@ -1,0 +1,83 @@
+@model PlayerStatIndexViewModel
+@{ ViewData["Title"] = "Thống kê thi đấu"; var isAdmin = User.IsInRole("Admin"); }
+<div class="page-header">
+    <h1><i class="bi bi-clipboard-data text-success"></i> Thống kê thi đấu</h1>
+    @if (isAdmin) { <a asp-action="Create" asp-route-tournamentId="@Model.TournamentId" class="btn btn-success"><i class="bi bi-plus-lg"></i> Nhập thống kê</a> }
+</div>
+
+<div class="card filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end auto-submit">
+            <div class="col-md-3">
+                <label class="form-label">Tên cầu thủ</label>
+                <input name="keyword" value="@Model.Keyword" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Giải đấu</label>
+                <select name="tournamentId" class="form-select" asp-items="ViewBag.Tournaments"><option value="">-- Tất cả --</option></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Đội bóng</label>
+                <select name="teamId" class="form-select" asp-items="ViewBag.Teams"><option value="">-- Tất cả --</option></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Sắp xếp</label>
+                <select name="sort" class="form-select">
+                    @foreach (var (k, v) in new[] { ("", "Bàn thắng"), ("minutes", "Số phút"), ("apps", "Số trận"), ("cards", "Thẻ phạt"), ("cs", "Giữ sạch lưới"), ("name", "Tên A → Z") })
+                    { <option value="@k" selected="@((Model.Sort ?? "") == k)">@v</option> }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-success"><i class="bi bi-search"></i></button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead>
+            <tr>
+                <th>Cầu thủ</th><th>Đội</th><th>Giải đấu</th>
+                <th class="text-center">Trận</th><th class="text-center">Đá chính</th><th class="text-center">Phút</th>
+                <th class="text-center">Bàn</th><th class="text-center">Phạt đền</th><th class="text-center">Bàn/90'</th>
+                <th class="text-center">Sạch lưới</th><th class="text-center">Thủng lưới</th><th class="text-center">Thẻ V/Đ</th>
+                @if (isAdmin) { <th></th> }
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var s in Model.Stats)
+            {
+                var detail = s.Tournament?.HasMatchDetails ?? true;
+                var gk = s.Player?.Position == Position.GK;
+                <tr>
+                    <td><a asp-controller="Players" asp-action="Details" asp-route-id="@s.PlayerId">@s.Player?.FullName</a> <span class="pos-badge">@s.Player?.Position</span></td>
+                    <td class="small">@(s.Team?.ShortName ?? "–")</td>
+                    <td class="small">@s.Tournament?.Name @s.Tournament?.Season</td>
+                    <td class="text-center">@(detail ? s.Appearances : "–")</td>
+                    <td class="text-center">@(detail ? s.Starts : "–")</td>
+                    <td class="text-center">@(detail ? s.MinutesPlayed : "–")</td>
+                    <td class="text-center fw-bold">@s.Goals</td>
+                    <td class="text-center">@(s.PenaltyGoals?.ToString() ?? "–")</td>
+                    <td class="text-center">@(s.GoalsPer90?.ToString("0.00") ?? "–")</td>
+                    <td class="text-center">@(detail && gk ? s.CleanSheets : "–")</td>
+                    <td class="text-center">@(detail && gk ? s.GoalsConceded : "–")</td>
+                    <td class="text-center">@s.YellowCards/@s.RedCards</td>
+                    @if (isAdmin)
+                    {
+                        <td class="text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-link p-0" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <a asp-action="Delete" asp-route-id="@s.Id" class="btn btn-sm btn-link p-0 text-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                        </td>
+                    }
+                </tr>
+            }
+            @if (!Model.Stats.Any()) { <tr><td colspan="13" class="text-center text-muted py-4">Không có dữ liệu thống kê phù hợp.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer small text-muted">“–”: nguồn dữ liệu không có chỉ số này cho giải / vị trí tương ứng. Nguồn: FotMob.</div>
+</div>
+<partial name="_Pager" model="Model.Stats" />

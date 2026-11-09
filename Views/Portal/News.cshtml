@@ -1,0 +1,48 @@
+@model PortalNewsListViewModel
+@{ ViewData["Title"] = "Tin tức"; Layout = "_PublicLayout"; }
+<section class="pv-section">
+    <div class="pv-title news-head"><h2>Tin tức</h2>
+    <form method="get" class="news-search" role="search">
+        @if (Model.Category != null) { <input type="hidden" name="category" value="@Model.Category" /> }
+        <i class="bi bi-search"></i>
+        <input name="q" value="@Model.Keyword" placeholder="Tìm bài viết..." aria-label="Tìm bài viết" />
+        @if (!string.IsNullOrWhiteSpace(Model.Keyword)) { <a asp-action="News" asp-route-category="@Model.Category" class="clr" title="Xóa từ khóa" aria-label="Xóa từ khóa"><i class="bi bi-x-circle-fill"></i></a> }
+        <button type="submit">Tìm</button>
+    </form>
+    </div>
+    <div class="news-bar mb-4">
+        <nav class="news-tabs" aria-label="Chuyên mục tin tức">
+            <a asp-action="News" asp-route-q="@Model.Keyword" class="news-tab @(Model.Category == null ? "active" : "")"><i class="bi bi-grid-fill"></i> Tất cả <span class="cnt">@Model.Total</span></a>
+            @foreach (var c in Enum.GetValues<NewsCategory>())
+            {
+                var n = Model.Counts.GetValueOrDefault(c);
+                <a asp-action="News" asp-route-category="@c" asp-route-q="@Model.Keyword" class="news-tab @(Model.Category == c ? "active" : "") @(n == 0 ? "empty" : "")"><i class="bi @PortalHelper.CategoryIcon(c)"></i> @c.DisplayName() <span class="cnt">@n</span></a>
+            }
+        </nav>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Keyword))
+    {
+        <div class="news-result mb-3">Tìm thấy <b>@Model.Items.TotalCount</b> bài viết cho “<b>@Model.Keyword</b>”@(Model.Category != null ? $" trong mục {Model.Category.Value.DisplayName()}" : "")</div>
+    }
+    <div class="row g-4">
+        <div class="col-lg-9">
+            <div class="row g-3">
+                @foreach (var n in Model.Items) { <div class="col-md-6 col-xl-4"><partial name="_NewsCard" model="n" /></div> }
+            </div>
+            @if (!Model.Items.Any()) { <div class="text-center text-muted py-5"><i class="bi bi-newspaper fs-1"></i><p>Không có bài viết phù hợp.</p></div> }
+            <partial name="_Pager" model="Model.Items" />
+        </div>
+        <div class="col-lg-3">
+            <div class="pv-card p-3">
+                <div class="fw-bold mb-2"><i class="bi bi-fire text-danger"></i> Đọc nhiều nhất</div>
+                <ol class="ps-3 mb-0">
+                    @foreach (var n in Model.MostRead)
+                    {
+                        <li class="mb-2"><a asp-action="NewsDetail" asp-route-id="@n.Id" asp-route-slug="@PortalHelper.Slug(n.Title)" class="text-decoration-none text-dark fw-semibold">@n.Title</a>
+                            <div class="pv-meta">@n.ViewCount lượt xem</div></li>
+                    }
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,94 @@
+@using Microsoft.EntityFrameworkCore
+@inject ScoutVN.Data.AppDbContext Db
+@inject ScoutVN.Services.IDataCache Cache
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string c) => string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name;
+    var isAdmin = User.IsInRole("Admin");
+    // Số tài khoản chờ duyệt: truy vấn bất đồng bộ + lưu đệm 30 giây (không chặn luồng xử lý khi đông người dùng)
+    var pendingUsers = isAdmin ? await Cache.GetAsync("pending-users", () => Db.Users.CountAsync(u => !u.IsApproved), TimeSpan.FromSeconds(30)) : 0;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ScoutVN</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script>try { if (localStorage.getItem('sv:sidebar') === 'collapsed') document.documentElement.classList.add('sv-collapsed'); } catch (e) { }</script>
+    <partial name="_ThemeHead" />
+</head>
+<body>
+<div class="sv-wrapper">
+    <aside class="sv-sidebar">
+        <a class="sv-brand" asp-controller="Portal" asp-action="Home"><i class="bi bi-dribbble"></i> <span>ScoutVN</span></a>
+        <nav class="sv-nav">
+            <div class="sv-nav-title">Tổng quan</div>
+            <a class="@Active("Home")" asp-controller="Home" asp-action="Dashboard"><i class="bi bi-speedometer2"></i> Bảng điều khiển</a>
+
+            <div class="sv-nav-title">Dữ liệu bóng đá</div>
+            <a class="@Active("Players")" asp-controller="Players" asp-action="Index"><i class="bi bi-person-badge"></i> Cầu thủ</a>
+            <a class="@Active("Teams")" asp-controller="Teams" asp-action="Index"><i class="bi bi-shield-shaded"></i> Đội bóng</a>
+            <a class="@Active("Tournaments")" asp-controller="Tournaments" asp-action="Index"><i class="bi bi-trophy"></i> Giải đấu</a>
+            <a class="@Active("Matches")" asp-controller="Matches" asp-action="Index"><i class="bi bi-calendar-event"></i> Trận đấu</a>
+            <a class="@Active("PlayerStats")" asp-controller="PlayerStats" asp-action="Index"><i class="bi bi-clipboard-data"></i> Thống kê thi đấu</a>
+
+            <div class="sv-nav-title">Phân tích &amp; tuyển chọn</div>
+            @{ var act = ViewContext.RouteData.Values["action"]?.ToString(); bool A(string c, string a) => string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) && string.Equals(act, a, StringComparison.OrdinalIgnoreCase); }
+            <a class="@(A("Analysis","Index") || A("Analysis","Player") ? "active" : "")" asp-controller="Analysis" asp-action="Index"><i class="bi bi-bar-chart-line"></i> Thống kê &amp; phân tích</a>
+            <a class="@(A("Analysis","Compare") ? "active" : "")" asp-controller="Analysis" asp-action="Compare"><i class="bi bi-arrow-left-right"></i> So sánh cầu thủ</a>
+            <a class="@(A("Analysis","Ranking") ? "active" : "")" asp-controller="Analysis" asp-action="Ranking"><i class="bi bi-sort-down"></i> Xếp hạng theo tiêu chí</a>
+            <a class="@Active("Recommend")" asp-controller="Recommend" asp-action="Index"><i class="bi bi-stars"></i> Gợi ý cầu thủ (KNN)</a>
+            <a class="@Active("Assistant")" asp-controller="Assistant" asp-action="Index"><i class="bi bi-chat-dots"></i> Trợ lý AI</a>
+
+            @if (isAdmin)
+            {
+                <div class="sv-nav-title">Hệ thống</div>
+                <a class="@Active("News")" asp-controller="News" asp-action="Index"><i class="bi bi-newspaper"></i> Tin tức</a>
+                <a class="@Active("Users")" asp-controller="Users" asp-action="Index"><i class="bi bi-people"></i> Người dùng @if (pendingUsers > 0) { <span class="badge rounded-pill bg-warning text-dark" title="@pendingUsers tài khoản chờ phê duyệt">@pendingUsers</span> }</a>
+            }
+        </nav>
+    </aside>
+    <div class="sv-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="sv-main">
+        <header class="sv-topbar">
+            <button id="sidebarToggle" class="sv-side-toggle" type="button" aria-label="Thu gọn / mở rộng menu" title="Thu gọn / mở rộng menu"><i class="bi bi-chevron-left d-none d-lg-inline"></i><i class="bi bi-list d-lg-none"></i></button>
+            <div class="text-muted small d-none d-md-block">Hệ thống quản lý, phân tích &amp; hỗ trợ tuyển chọn cầu thủ bóng đá Việt Nam</div>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <partial name="_ThemeToggle" />
+                <a asp-controller="Portal" asp-action="Home" class="btn btn-sm btn-outline-success" title="Mở cổng thông tin công khai"><i class="bi bi-globe2"></i> <span class="d-none d-md-inline">Trang công khai</span></a>
+                @{ var userWords = (fullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                   var userInitials = string.Concat(userWords.TakeLast(2).Select(w => char.ToUpper(w[0]))); }
+                <div class="sv-user">
+                    <span class="sv-user-avatar @(isAdmin ? "admin" : "")">@userInitials</span>
+                    <div class="lh-sm">
+                        <div class="sv-user-name">@fullName</div>
+                        <span class="sv-user-role @(isAdmin ? "admin" : "")">@(isAdmin ? "Quản trị viên" : "HLV / Tuyển trạch")</span>
+                    </div>
+                </div>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
+                </form>
+            </div>
+        </header>
+
+        <main class="sv-content">
+            <partial name="_Alerts" />
+            @RenderBody()
+        </main>
+
+        <footer class="sv-footer">
+            &copy; 2026 ScoutVN – Đồ án ngành Nhóm 14 · Viện Trí tuệ nhân tạo và Chuyển đổi số – Trường Đại học Bình Dương
+        </footer>
+    </div>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

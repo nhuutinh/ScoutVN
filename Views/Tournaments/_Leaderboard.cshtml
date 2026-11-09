@@ -1,0 +1,25 @@
+@model (string Title, string Icon, List<PlayerStat> Rows, string Column)
+<div class="card h-100">
+    <div class="card-header"><i class="bi @Model.Icon"></i> @Model.Title</div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead><tr><th>#</th><th>Cầu thủ</th><th>Đội</th><th class="text-center">@(Model.Column == "Bàn" ? "Pen" : "Trận")</th><th class="text-center">@Model.Column</th></tr></thead>
+            <tbody>
+            @{ int i = 1; }
+            @foreach (var s in Model.Rows)
+            {
+                <tr>
+                    <td>@(i++)</td>
+                    <td><a asp-controller="Players" asp-action="Details" asp-route-id="@s.PlayerId">@s.Player?.FullName</a></td>
+                    <td class="small">@(s.Team?.ShortName ?? "–")</td>
+                    <td class="text-center">@(Model.Column == "Bàn" ? (s.PenaltyGoals?.ToString() ?? "–") : (s.Appearances > 0 ? s.Appearances.ToString() : "–"))</td>
+                    <td class="text-center fw-bold">
+                        @(Model.Column switch { "Bàn" => s.Goals.ToString(), "Phút" => s.MinutesPlayed.ToString(), _ => $"{s.YellowCards}V / {s.RedCards}Đ" })
+                    </td>
+                </tr>
+            }
+            @if (!Model.Rows.Any()) { <tr><td colspan="5" class="text-center text-muted">Chưa có dữ liệu</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

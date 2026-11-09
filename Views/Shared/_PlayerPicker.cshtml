@@ -1,0 +1,11 @@
+@model (string Name, int? SelectedId, string? SelectedName, string Placeholder, bool Required)
+@* Ô nhập tìm cầu thủ: gõ vài chữ (có dấu hoặc không dấu) → chọn trong danh sách gợi ý *@
+<div class="player-picker position-relative">
+    <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control pp-input" value="@Model.SelectedName" placeholder="@Model.Placeholder" autocomplete="off" required="@Model.Required" />
+        <button type="button" class="btn btn-outline-secondary pp-clear" title="Xóa" tabindex="-1"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <input type="hidden" name="@Model.Name" class="pp-value" value="@Model.SelectedId" />
+    <div class="list-group pp-menu shadow-sm"></div>
+</div>

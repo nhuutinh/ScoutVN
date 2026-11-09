@@ -1,0 +1,11 @@
+@model Player
+@{ ViewData["Title"] = "Sửa cầu thủ"; }
+<div class="page-header"><h1>Sửa cầu thủ</h1></div>
+<form asp-action="Edit" method="post">
+    <partial name="_Form" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Lưu</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Hủy</a>
+    </div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

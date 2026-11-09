@@ -1,0 +1,45 @@
+@model (List<ScoutVN.Services.StandingRow> Rows, bool Public)
+@* Bảng xếp hạng đội – dùng chung cho trang quản trị và cổng công khai *@
+@{
+    var n = Model.Rows.Count;
+}
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0 standings">
+        <thead>
+        <tr>
+            <th class="text-center">#</th><th>Đội bóng</th>
+            <th class="text-center" title="Số trận">ST</th><th class="text-center" title="Thắng">T</th><th class="text-center" title="Hòa">H</th><th class="text-center" title="Bại">B</th>
+            <th class="text-center d-none d-md-table-cell" title="Bàn thắng – bàn thua">BT–BB</th><th class="text-center" title="Hiệu số">HS</th><th class="text-center">Điểm</th>
+            <th class="text-center d-none d-lg-table-cell">5 trận gần nhất</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model.Rows)
+        {
+            var zone = r.Rank == 1 ? "zone-top" : (n >= 14 && r.Rank == n ? "zone-bottom" : "");
+            <tr class="@zone">
+                <td class="text-center fw-bold">@r.Rank</td>
+                <td>
+                    @if (Model.Public) { <a asp-controller="Portal" asp-action="Team" asp-route-id="@r.Team.Id" class="fw-semibold text-decoration-none">@r.Team.Name</a> }
+                    else { <a asp-controller="Teams" asp-action="Details" asp-route-id="@r.Team.Id" class="fw-semibold text-decoration-none">@r.Team.Name</a> }
+                </td>
+                <td class="text-center">@r.Played</td>
+                <td class="text-center">@r.Won</td>
+                <td class="text-center">@r.Drawn</td>
+                <td class="text-center">@r.Lost</td>
+                <td class="text-center d-none d-md-table-cell">@r.GoalsFor–@r.GoalsAgainst</td>
+                <td class="text-center">@(r.GoalDiff > 0 ? "+" : "")@r.GoalDiff</td>
+                <td class="text-center fw-bold">@r.Points</td>
+                <td class="text-center d-none d-lg-table-cell text-nowrap">
+                    @foreach (var f in r.Form)
+                    {
+                        <span class="form-dot form-@(f == 'T' ? "w" : f == 'H' ? "d" : "l")" title="@(f == 'T' ? "Thắng" : f == 'H' ? "Hòa" : "Bại")">@f</span>
+                    }
+                </td>
+            </tr>
+        }
+        @if (n == 0) { <tr><td colspan="10" class="text-center text-muted py-3">Chưa có kết quả trận đấu.</td></tr> }
+        </tbody>
+    </table>
+</div>
+<div class="small text-muted px-3 py-2">Xếp theo Điểm → Hiệu số → Bàn thắng. Tính tự động từ kết quả các trận trong hệ thống (nguồn FotMob).</div>

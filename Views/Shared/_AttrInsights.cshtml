@@ -1,0 +1,33 @@
+@model (List<ScoutVN.Services.AttrInsight> Items, ScoutVN.Models.Player Player)
+@* Bảng chỉ số chi tiết: điểm + con số cụ thể có đơn vị + căn cứ số liệu thật *@
+@{
+    string Bar(int v) => v >= 80 ? "bg-success" : v >= 70 ? "bg-primary" : v >= 60 ? "bg-info" : v >= 50 ? "bg-warning" : "bg-danger";
+    var p = Model.Player;
+}
+<div class="row g-3 attr-insights">
+    @foreach (var a in Model.Items)
+    {
+        <div class="col-md-6 col-xxl-4">
+            <div class="ai-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="fw-semibold"><i class="bi @a.Icon text-success"></i> @a.Name</div>
+                    <span class="badge ai-level lv-@(a.Score / 10)">@a.Level</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="progress flex-grow-1" style="height:.5rem"><div class="progress-bar @Bar(a.Score)" style="width:@a.Score%"></div></div>
+                    <div class="fw-bold small" title="Điểm trên thang 100">@a.Score<span class="text-muted fw-normal">/100</span></div>
+                </div>
+                <div class="ai-measure">@a.Measure</div>
+                <div class="small text-muted mb-1">@a.MeasureNote</div>
+                <ul class="small mb-0 ps-3">
+                    @foreach (var e in a.Evidence) { <li>@e</li> }
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+<div class="small text-muted mt-2">
+    <b>Chỉ số tổng @p.Overall/100</b> = trung bình có trọng số của 6 chỉ số theo vị trí @p.Position.DisplayName()
+    @{ var w = ScoutVN.Services.PlayerInsightsText.Weights(p.Position); } (@w).
+    @if (p.AttributesEstimated) { <text>Điểm 6 chỉ số được hệ thống ước tính từ dữ liệu thật; HLV có thể chấm lại sau khi theo dõi trực tiếp.</text> }
+</div>

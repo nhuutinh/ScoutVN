@@ -1,0 +1,131 @@
+@model AnalysisOverviewViewModel
+@{
+    ViewData["Title"] = "Thống kê & phân tích";
+    var tiles = new[]
+    {
+        ("Trận đã đá", Model.MatchesPlayed.ToString("N0", ScoutVN.Services.Fmt.VI), "bi-calendar-check"),
+        ("Tổng bàn thắng", Model.TotalGoals.ToString("N0", ScoutVN.Services.Fmt.VI), "bi-bullseye"),
+        ("Bàn / trận", Model.GoalsPerMatch.ToString("0.00"), "bi-graph-up"),
+        ("Đội nhà thắng / hòa", $"{Model.HomeWinPct:0}% / {Model.DrawPct:0}%", "bi-house"),
+        ("Thẻ vàng / đỏ", $"{Model.YellowCards} / {Model.RedCards}", "bi-file-earmark-fill"),
+        ("Cầu thủ có số liệu", Model.PlayersWithStats.ToString("N0", ScoutVN.Services.Fmt.VI), "bi-people"),
+    };
+}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart-line text-success"></i> Thống kê &amp; phân tích hiệu suất</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Compare" class="btn btn-outline-success btn-sm"><i class="bi bi-arrow-left-right"></i> So sánh cầu thủ</a>
+        <a asp-action="Ranking" class="btn btn-success btn-sm"><i class="bi bi-sort-down"></i> Xếp hạng theo tiêu chí</a>
+    </div>
+</div>
+
+<form method="get" class="card filter-card mb-3 auto-submit"><div class="card-body row g-2 align-items-end">
+    <div class="col-md-4"><partial name="_ScopeSelect" model="Model.Tournaments" /></div>
+    <div class="col-md-8 small text-muted">Số liệu thi đấu thật của V.League 1 (nguồn FotMob) theo phạm vi đã chọn.
+        @if (!Model.HasMinutes) { <b class="text-warning-emphasis">Phạm vi này chỉ có bàn thắng và thẻ phạt (không có số phút).</b> }
+        Định giá CLB và độ tuổi tính trên toàn bộ cầu thủ đang thi đấu; giá trị cầu thủ là số ước tính.</div>
+</div></form>
+
+<div class="sv-paged">
+@if (Model.Standings.Any())
+{
+<section class="sv-page" data-title="Bảng xếp hạng">
+    <div class="card"><div class="card-header"><i class="bi bi-list-ol"></i> Bảng xếp hạng – @Model.ScopeName</div>
+        <partial name="_Standings" model="(Model.Standings, false)" />
+    </div>
+</section>
+}
+<section class="sv-page" data-title="Tổng quan &amp; ghi bàn">
+<div class="row g-3 mb-3">
+    @foreach (var (label, value, icon) in tiles)
+    {
+        <div class="col-6 col-lg">
+            <div class="card stat-card h-100">
+                <div class="icon" style="background:#e8f3ec;color:#18663d"><i class="bi @icon"></i></div>
+                <div><div class="value">@value</div><div class="label">@label</div></div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-6">
+        <div class="card h-100"><div class="card-header">Top 10 ghi bàn – @Model.ScopeName</div>
+            <div class="card-body"><div style="height:340px"><canvas id="chScorers" aria-label="Biểu đồ top ghi bàn"></canvas></div></div></div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card h-100"><div class="card-header">@Model.SecondTitle – @Model.ScopeName</div>
+            <div class="card-body"><div style="height:340px"><canvas id="chSecond" aria-label="@Model.SecondTitle"></canvas></div></div></div>
+    </div>
+</div>
+</section>
+<section class="sv-page" data-title="Đội bóng &amp; vị trí">
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="card h-100"><div class="card-header">Bàn thắng theo đội (từ kết quả trận đấu)</div>
+            <div class="card-body"><div style="height:320px"><canvas id="chTeams"></canvas></div></div></div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card h-100"><div class="card-header">Bàn thắng theo nhóm vị trí</div>
+            <div class="card-body"><div style="height:320px"><canvas id="chGroups"></canvas></div></div></div>
+    </div>
+</div>
+</section>
+<section class="sv-page" data-title="Định giá CLB &amp; độ tuổi">
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card h-100"><div class="card-header">Định giá câu lạc bộ (tỷ VNĐ, tổng giá trị ước tính đội hình)</div>
+            <div class="card-body"><div style="height:320px"><canvas id="chValue"></canvas></div></div></div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-header">Phân bố độ tuổi cầu thủ</div>
+            <div class="card-body"><div style="height:320px"><canvas id="chAge"></canvas></div></div></div>
+    </div>
+</div>
+</section>
+<section class="sv-page" data-title="Cầu thủ nổi bật">
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card"><div class="card-header">Cầu thủ nổi bật theo nhóm vị trí (điểm cao nhất theo tiêu chí mặc định của nhóm@(Model.HasMinutes ? ", tối thiểu " + KnnQuery.DefaultMinMinutes + " phút" : ""))</div>
+            <div class="table-responsive"><table class="table table-hover mb-0">
+                <thead><tr><th>Nhóm vị trí</th><th>Tiêu chí</th><th>Cầu thủ</th><th>Đội</th><th class="text-center">Trận</th><th class="text-center">Phút</th><th class="text-center">Bàn</th><th class="text-center">Điểm (0–100)</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var (group, row, score, criteria) in Model.BestByGroup)
+                {
+                    <tr>
+                        <td>@group</td>
+                        <td class="small text-muted">@criteria</td>
+                        <td><a asp-controller="Players" asp-action="Details" asp-route-id="@row.Player.Id">@row.Player.FullName</a> <span class="pos-badge">@row.Player.Position</span></td>
+                        <td>@(row.Player.Team?.Name ?? "–")</td>
+                        <td class="text-center">@(Model.HasMinutes ? row.Stat!.Appearances.ToString() : "–")</td>
+                        <td class="text-center">@(Model.HasMinutes ? row.Stat!.Minutes.ToString() : "–")</td>
+                        <td class="text-center">@row.Stat!.Goals</td>
+                        <td class="text-center fw-bold">@score.ToString("0.0")</td>
+                        <td class="text-end"><a asp-action="Player" asp-route-id="@row.Player.Id" asp-route-tournamentId="@Model.TournamentId" class="btn btn-sm btn-outline-success" title="Phân tích cầu thủ" aria-label="Phân tích cầu thủ"><i class="bi bi-graph-up"></i></a></td>
+                    </tr>
+                }
+                @if (!Model.BestByGroup.Any()) { <tr><td colspan="9" class="text-center text-muted py-3">Chưa có dữ liệu.</td></tr> }
+                </tbody>
+            </table></div>
+            <div class="card-footer small text-muted">Điểm tính như trang <a asp-action="Ranking">Xếp hạng theo tiêu chí</a> với bộ tiêu chí mặc định của từng nhóm vị trí.</div>
+        </div>
+    </div>
+</div>
+</section>
+</div>
+
+@section Scripts {
+    <partial name="_ChartScripts" />
+    <script>
+        const d = @Html.Raw(Json.Serialize(new {
+            scorers = Model.TopScorers, second = Model.SecondBoard, secondLabel = Model.SecondLabel, teams = Model.GoalsByTeam,
+            groups = Model.GoalsByGroup, clubs = Model.ClubValues, ages = Model.AgeGroups, tid = Model.TournamentId }));
+        const link = (arr) => arr.map(p => `/Analysis/Player/${p.id}?tournamentId=${d.tid}`);
+        SV.bar('chScorers', d.scorers.map(p => p.label), d.scorers.map(p => p.value), { horizontal: true, label: 'Bàn thắng', links: link(d.scorers) });
+        SV.bar('chSecond', d.second.map(p => p.label), d.second.map(p => p.value), { horizontal: true, label: d.secondLabel, links: link(d.second) });
+        SV.bar('chTeams', d.teams.map(p => p.label), d.teams.map(p => p.value), { label: 'Bàn thắng' });
+        SV.bar('chGroups', d.groups.map(p => p.label), d.groups.map(p => p.value), { label: 'Bàn thắng', horizontal: true });
+        SV.bar('chValue', d.clubs.map(p => p.label), d.clubs.map(p => p.value), { label: 'Định giá (tỷ VNĐ)', decimals: 1, links: d.clubs.map(p => '/Teams/Details/' + p.id) });
+        SV.bar('chAge', d.ages.map(p => p.label), d.ages.map(p => p.value), { label: 'Số cầu thủ' });
+    </script>
+}

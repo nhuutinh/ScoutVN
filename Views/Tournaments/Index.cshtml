@@ -1,0 +1,67 @@
+@model TournamentIndexViewModel
+@{ ViewData["Title"] = "Giải đấu"; var isAdmin = User.IsInRole("Admin"); }
+<div class="page-header">
+    <h1><i class="bi bi-trophy text-success"></i> Giải đấu</h1>
+    @if (isAdmin) { <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm giải đấu</a> }
+</div>
+
+<div class="card filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end auto-submit">
+            <div class="col-md-4">
+                <label class="form-label">Từ khóa (tên giải, đơn vị tổ chức)</label>
+                <input name="keyword" value="@Model.Keyword" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Mùa giải</label>
+                <select name="season" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var s in Model.Seasons) { <option value="@s" selected="@(s == Model.Season)">@s</option> }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Loại giải</label>
+                <select name="type" class="form-select" asp-items="EnumExtensions.ToSelectList(Model.Type)">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-success"><i class="bi bi-search"></i> Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Giải đấu</th><th>Mùa giải</th><th>Loại</th><th>Đơn vị tổ chức</th><th>Thời gian</th><th class="text-center">Cầu thủ có số liệu</th><th class="text-center">Tổng bàn</th><th class="text-end">Thao tác</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Tournaments)
+            {
+                var t = item.Tournament;
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@t.Id" class="fw-semibold">@t.Name</a></td>
+                    <td>@t.Season</td>
+                    <td>@t.Type.DisplayName()</td>
+                    <td>@(t.Organizer ?? "-")</td>
+                    <td class="small">@(t.StartDate?.ToString("dd/MM/yyyy") ?? "?") – @(t.EndDate?.ToString("dd/MM/yyyy") ?? "đang diễn ra")</td>
+                    <td class="text-center">@item.PlayerCount</td>
+                    <td class="text-center">@item.TotalGoals</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Details" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary" title="Xem"><i class="bi bi-eye"></i></a>
+                        @if (isAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-outline-primary" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <a asp-action="Delete" asp-route-id="@t.Id" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Tournaments.Any()) { <tr><td colspan="8" class="text-center text-muted py-4">Không tìm thấy giải đấu phù hợp.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
+<partial name="_Pager" model="Model.Tournaments" />

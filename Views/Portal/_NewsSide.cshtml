@@ -1,0 +1,15 @@
+@model News
+@* Thẻ tin dạng ngang (cột phải trang chủ): dùng ảnh bìa nếu bài có ảnh, nếu không thì nền màu theo chuyên mục *@
+@{ var hasImg = !string.IsNullOrEmpty(Model.ImageUrl); }
+<a class="pv-card d-flex" asp-action="NewsDetail" asp-route-id="@Model.Id" asp-route-slug="@PortalHelper.Slug(Model.Title)">
+    @if (hasImg)
+    {
+        <div class="pv-cover" style="width:42%;aspect-ratio:auto;min-height:130px;flex-shrink:0;background-image:url('@Model.ImageUrl')"></div>
+    }
+    else
+    {
+        <div class="pv-cover cov-@((int)Model.Category)" style="width:42%;aspect-ratio:auto;min-height:130px;flex-shrink:0"><i class="bi @PortalHelper.CategoryIcon(Model.Category)"></i></div>
+    }
+    <div class="pv-news-body"><div class="small text-success fw-semibold">@Model.Category.DisplayName()</div><h3 class="clamp-2">@Model.Title</h3><p class="clamp-2">@Model.Summary</p>
+        <div class="pv-meta">@PortalHelper.TimeAgo(Model.PublishedAt)</div></div>
+</a>

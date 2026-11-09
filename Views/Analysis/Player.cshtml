@@ -1,0 +1,134 @@
+@model PlayerAnalysisViewModel
+@{
+    var p = Model.Player;
+    ViewData["Title"] = "Phân tích – " + p.FullName;
+    var s = Model.Row.Stat;
+    string BarClass(double? v) => v switch { null => "bg-secondary", >= 75 => "bg-success", >= 50 => "bg-primary", >= 30 => "bg-warning", _ => "bg-danger" };
+}
+<div class="page-header">
+    <h1><i class="bi bi-graph-up text-success"></i> Phân tích hiệu suất</h1>
+    <div class="d-flex gap-2">
+        <a asp-controller="Players" asp-action="Details" asp-route-id="@p.Id" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person"></i> Hồ sơ</a>
+        <a asp-action="Compare" asp-route-ids="@p.Id" asp-route-tournamentId="@Model.TournamentId" class="btn btn-outline-success btn-sm"><i class="bi bi-arrow-left-right"></i> So sánh với cầu thủ khác</a>
+        <a asp-controller="Recommend" asp-action="Index" asp-route-mode="similar" asp-route-playerId="@p.Id" asp-route-tournamentId="@Model.TournamentId" asp-route-go="1" class="btn btn-outline-success btn-sm"><i class="bi bi-people"></i> Tìm cầu thủ tương tự</a>
+    </div>
+</div>
+
+<div class="card mb-3"><div class="card-body d-flex flex-wrap align-items-center gap-3">
+    <partial name="_PlayerAvatar" model="p" />
+    <div class="flex-grow-1">
+        <div class="h5 mb-0">@p.FullName <span class="ovr badge @RatingHelper.BadgeClass(p.Overall)">@p.Overall</span></div>
+        <div class="text-muted small">@p.Position.DisplayName() · @(p.Team?.Name ?? p.Status.DisplayName()) · @p.Age tuổi · @p.Nationality @if (p.HeightCm.HasValue) { <text>· @p.HeightCm cm</text> }</div>
+
+    </div>
+    <form method="get" class="d-flex gap-2 align-items-end auto-submit" style="min-width:280px">
+        <div class="flex-grow-1"><partial name="_ScopeSelect" model="Model.Tournaments" /></div>
+    </form>
+</div></div>
+
+<div class="sv-paged">
+<section class="sv-page" data-title="Năng lực &amp; phân vị">
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-header">Chỉ số năng lực (ước tính) so với trung bình nhóm @PositionGroups.Name(Model.Group).ToLower()</div>
+            <div class="card-body"><div style="height:340px"><canvas id="chRadar" aria-label="Biểu đồ radar chỉ số năng lực"></canvas></div></div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">Phân vị so với cầu thủ cùng nhóm vị trí
+                <span class="text-muted small fw-normal">– chỉ số thi đấu: @Model.ScopeName, @Model.PoolSize cầu thủ có ≥ @Model.MinMinutes phút</span></div>
+            <div class="card-body">
+                @if (s == null)
+                {
+                    <div class="alert alert-light border small mb-3"><i class="bi bi-info-circle"></i> Cầu thủ chưa có số liệu thi đấu trong phạm vi “@Model.ScopeName”. Chỉ hiển thị phân vị chỉ số năng lực.</div>
+                }
+                @foreach (var item in Model.Percentiles)
+                {
+                    <div class="attr-row" title="Phân vị @(item.Percentile?.ToString("0") ?? "–"): không kém hơn @(item.Percentile?.ToString("0") ?? "–")% cầu thủ cùng nhóm">
+                        <div class="name" style="width:200px">@item.Name</div>
+                        <div class="progress"><div class="progress-bar @BarClass(item.Percentile)" style="width:@(item.Percentile ?? 0)%"></div></div>
+                        <div class="num" style="width:3.5rem">@(item.Percentile?.ToString("0") ?? "–")</div>
+                        <div class="text-muted small text-end" style="width:4rem">@item.Display</div>
+                    </div>
+                }
+                <div class="small text-muted mt-2">Cột số: phân vị (0–100), cột cuối: giá trị thực. Màu: xanh lá ≥ 75 · xanh dương ≥ 50 · vàng ≥ 30 · đỏ &lt; 30.</div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+<section class="sv-page" data-title="Chỉ số chi tiết">
+    <div class="card"><div class="card-header">Chỉ số chi tiết – điểm, con số cụ thể và căn cứ số liệu thật</div>
+        <div class="card-body"><partial name="_AttrInsights" model="(Model.Insights, p)" /></div></div>
+</section>
+<section class="sv-page" data-title="Điểm mạnh – điểm yếu">
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100 border-success"><div class="card-header text-success"><i class="bi bi-hand-thumbs-up"></i> Điểm mạnh</div>
+            <ul class="list-group list-group-flush small">
+                @foreach (var x in Model.Strengths) { <li class="list-group-item">@x</li> }
+                @if (!Model.Strengths.Any()) { <li class="list-group-item text-muted">Chưa có chỉ số nào thuộc nhóm 25% tốt nhất.</li> }
+            </ul></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100 border-warning"><div class="card-header text-dark"><i class="bi bi-exclamation-diamond"></i> Điểm cần cải thiện</div>
+            <ul class="list-group list-group-flush small">
+                @foreach (var x in Model.Weaknesses) { <li class="list-group-item">@x</li> }
+                @if (!Model.Weaknesses.Any()) { <li class="list-group-item text-muted">Không có chỉ số nào thuộc nhóm 30% thấp nhất.</li> }
+            </ul></div>
+    </div>
+</div>
+</section>
+@if (Model.Seasons.Any())
+{
+<section class="sv-page" data-title="Diễn biến qua các mùa">
+<div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card h-100"><div class="card-header">Bàn thắng &amp; thẻ phạt theo từng giải / mùa</div>
+                <div class="card-body"><div style="height:280px"><canvas id="chSeasonGA"></canvas></div></div></div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100"><div class="card-header">Số phút thi đấu theo từng giải / mùa</div>
+                <div class="card-body"><div style="height:280px"><canvas id="chSeasonRating"></canvas></div></div></div>
+        </div>
+        <div class="col-12">
+            <div class="card"><div class="card-header">Bảng số liệu theo giải</div>
+                <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>Giải / mùa</th><th>Đội</th><th class="text-center">Trận</th><th class="text-center">Đá chính</th><th class="text-center">Phút</th><th class="text-center">Bàn (pen)</th><th class="text-center">Bàn/90'</th><th class="text-center">Thẻ V/Đ</th></tr></thead>
+                    <tbody>
+                    @foreach (var x in Model.Seasons)
+                    {
+                        <tr><td>@x.Tournament</td><td>@(x.Team ?? "–")</td>
+                            <td class="text-center">@(x.HasDetails ? x.Appearances : "–")</td><td class="text-center">@(x.HasDetails ? x.Starts : "–")</td><td class="text-center">@(x.HasDetails ? x.Minutes : "–")</td>
+                            <td class="text-center">@x.Goals@(x.PenaltyGoals > 0 ? $" ({x.PenaltyGoals})" : "")</td>
+                            <td class="text-center">@(x.Minutes > 0 ? (x.Goals * 90.0 / x.Minutes).ToString("0.00") : "–")</td><td class="text-center">@x.YellowCards/@x.RedCards</td></tr>
+                    }
+                    </tbody>
+                </table></div></div>
+        </div>
+</div>
+</section>
+}
+</div>
+
+@section Scripts {
+    <partial name="_ChartScripts" />
+    <script>
+        const d = @Html.Raw(Json.Serialize(new { name = p.FullName, attrs = Model.Attributes, avg = Model.GroupAverage,
+            group = PositionGroups.Name(Model.Group), seasons = Model.Seasons }));
+        const labels = ['Tốc độ', 'Dứt điểm', 'Chuyền bóng', 'Rê bóng', 'Phòng ngự', 'Thể lực'];
+        SV.radar('chRadar', labels, [
+            { name: d.name, values: d.attrs },
+            { name: 'TB nhóm ' + d.group.toLowerCase(), values: d.avg, color: SV.neutral, dashed: true, fill: false }
+        ]);
+        if (d.seasons.length) {
+            const sl = d.seasons.map(x => x.tournament);
+            SV.groupedBar('chSeasonGA', sl, [
+                { name: 'Bàn thắng', values: d.seasons.map(x => x.goals) },
+                { name: 'Thẻ vàng', values: d.seasons.map(x => x.yellowCards) }
+            ]);
+            SV.bar('chSeasonRating', sl, d.seasons.map(x => x.hasDetails ? x.minutes : 0), { label: 'Số phút' });
+        }
+    </script>
+}

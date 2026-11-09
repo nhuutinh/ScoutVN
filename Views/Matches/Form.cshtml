@@ -1,0 +1,38 @@
+@model Match
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Thêm trận đấu" : "Sửa trận đấu";
+}
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<div class="card"><div class="card-body">
+    <form asp-action="@(isNew ? "Create" : "Edit")" method="post">
+        <div asp-validation-summary="All" class="alert alert-danger"></div>
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="SourceId" />
+        <div class="row g-3">
+            <div class="col-md-5"><label asp-for="TournamentId" class="form-label"></label> <span class="text-danger">*</span>
+                <select asp-for="TournamentId" class="form-select" asp-items="ViewBag.Tournaments"><option value="0">-- Chọn giải --</option></select>
+                <span asp-validation-for="TournamentId" class="text-danger small"></span></div>
+            <div class="col-md-2"><label asp-for="Round" class="form-label"></label> <span class="text-danger">*</span>
+                <input asp-for="Round" class="form-control" type="number" min="1" /><span asp-validation-for="Round" class="text-danger small"></span></div>
+            <div class="col-md-5"><label asp-for="KickOff" class="form-label"></label>
+                <input asp-for="KickOff" class="form-control" type="datetime-local" /></div>
+            <div class="col-md-5"><label asp-for="HomeTeamId" class="form-label"></label> <span class="text-danger">*</span>
+                <select asp-for="HomeTeamId" class="form-select" asp-items="ViewBag.Teams"><option value="0">-- Chọn đội --</option></select>
+                <span asp-validation-for="HomeTeamId" class="text-danger small"></span></div>
+            <div class="col-6 col-md-1"><label asp-for="HomeGoals" class="form-label"></label>
+                <input asp-for="HomeGoals" class="form-control" type="number" min="0" /></div>
+            <div class="col-6 col-md-1"><label asp-for="AwayGoals" class="form-label"></label>
+                <input asp-for="AwayGoals" class="form-control" type="number" min="0" /><span asp-validation-for="AwayGoals" class="text-danger small"></span></div>
+            <div class="col-md-5"><label asp-for="AwayTeamId" class="form-label"></label> <span class="text-danger">*</span>
+                <select asp-for="AwayTeamId" class="form-select" asp-items="ViewBag.Teams"><option value="0">-- Chọn đội --</option></select>
+                <span asp-validation-for="AwayTeamId" class="text-danger small"></span></div>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Để trống tỉ số nếu trận chưa diễn ra. Bảng xếp hạng được tính lại tự động từ kết quả.</p>
+        <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu</button>
+            <a asp-action="Index" asp-route-tournamentId="@Model.TournamentId" class="btn btn-outline-secondary">Hủy</a>
+        </div>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

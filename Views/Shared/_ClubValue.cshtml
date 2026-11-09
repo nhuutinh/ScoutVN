@@ -1,0 +1,3 @@
+@model ScoutVN.Services.ClubValue
+@* Định giá câu lạc bộ = tổng giá trị ước tính các cầu thủ đang thuộc biên chế *@
+<span title="Tổng giá trị ước tính của các cầu thủ đang thuộc đội">≈ @ScoutVN.Services.Fmt.Money((int)Math.Min(int.MaxValue, Model.Total))</span>

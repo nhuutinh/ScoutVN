@@ -1,0 +1,17 @@
+@model Leaderboards
+@{ var uid = ViewData["BoardId"] as string ?? "b"; }
+<div class="pv-card pv-board">
+    <ul class="nav nav-tabs px-2 pt-1" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#@(uid)-g" type="button" role="tab"><i class="bi bi-bullseye"></i> Ghi bàn</button></li>
+        @if (Model.Minutes.Any()) { <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(uid)-a" type="button" role="tab"><i class="bi bi-stopwatch"></i> Số phút</button></li> }
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(uid)-r" type="button" role="tab"><i class="bi bi-file-earmark-fill"></i> Thẻ phạt</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(uid)-c" type="button" role="tab"><i class="bi bi-shield-check"></i> Thủ môn</button></li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="@(uid)-g" role="tabpanel"><partial name="_Leaderboard" model='("g", Model.Goals, "Bàn", false)' /></div>
+        <div class="tab-pane fade" id="@(uid)-a" role="tabpanel"><partial name="_Leaderboard" model='("a", Model.Minutes, "Phút", false)' /></div>
+        <div class="tab-pane fade" id="@(uid)-r" role="tabpanel"><partial name="_Leaderboard" model='("r", Model.Cards, "Vàng / Đỏ", false)' /></div>
+        <div class="tab-pane fade" id="@(uid)-c" role="tabpanel"><partial name="_Leaderboard" model='("c", Model.CleanSheets, "Sạch lưới", false)' /></div>
+    </div>
+    <div class="data-source px-3 py-2 border-top">Nguồn số liệu: FotMob · V.League 1</div>
+</div>

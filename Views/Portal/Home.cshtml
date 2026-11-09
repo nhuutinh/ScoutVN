@@ -1,0 +1,260 @@
+@model PortalHomeViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+    Layout = "_PublicLayout";
+    var lg = Model.CurrentLeague;
+    var authed = User.Identity?.IsAuthenticated == true;
+}
+
+@section Hero {
+<section class="pv-hero">
+    <div class="pv-hero-fx" aria-hidden="true">
+        <div class="fx-bg"></div>
+        <div class="fx-beam fx-beam-l"></div>
+        <div class="fx-beam fx-beam-r"></div>
+        <div class="fx-sweep"></div>
+        <div class="fx-shade"></div>
+        <div class="fx-sparks"><i style="--x:6%;--d:0s;--t:11s;--s:6px;--c:#ffd23f"></i><i style="--x:14%;--d:3s;--t:13s;--s:4px;--c:#ffffff"></i><i style="--x:22%;--d:6s;--t:10s;--s:5px;--c:#4ade80"></i><i style="--x:31%;--d:1.5s;--t:14s;--s:3px;--c:#ffffff"></i><i style="--x:39%;--d:8s;--t:12s;--s:6px;--c:#ffd23f"></i><i style="--x:48%;--d:4s;--t:15s;--s:4px;--c:#7dd3fc"></i><i style="--x:56%;--d:2s;--t:11s;--s:5px;--c:#ffffff"></i><i style="--x:63%;--d:7s;--t:13s;--s:3px;--c:#4ade80"></i><i style="--x:71%;--d:5s;--t:10s;--s:6px;--c:#ffffff"></i><i style="--x:78%;--d:9s;--t:14s;--s:4px;--c:#ffd23f"></i><i style="--x:85%;--d:1s;--t:12s;--s:5px;--c:#4ade80"></i><i style="--x:92%;--d:6.5s;--t:11s;--s:3px;--c:#ffffff"></i><i style="--x:97%;--d:3.5s;--t:13s;--s:5px;--c:#7dd3fc"></i><i style="--x:44%;--d:10s;--t:16s;--s:4px;--c:#ffffff"></i></div>
+        <svg class="fx-ball" viewBox="0 0 100 100"><defs><clipPath id="bc"><circle cx="50" cy="50" r="46"/></clipPath><radialGradient id="bs" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cfd8d3"/></radialGradient></defs><circle cx="50" cy="50" r="46" fill="url(#bs)"/><g clip-path="url(#bc)"><polygon points="50.0,35.0 64.3,45.4 58.8,62.1 41.2,62.1 35.7,45.4" fill="#0b2318"/><polygon points="57.6,-4.5 62.4,10.0 50.0,19.0 37.6,10.0 42.4,-4.5" fill="#0b2318"/><polygon points="104.2,40.4 91.8,49.4 79.5,40.4 84.2,25.9 99.5,25.9" fill="#0b2318"/><polygon points="75.9,98.6 63.5,89.6 68.2,75.1 83.5,75.1 88.2,89.6" fill="#0b2318"/><polygon points="11.8,89.6 16.5,75.1 31.8,75.1 36.5,89.6 24.1,98.6" fill="#0b2318"/><polygon points="0.5,25.9 15.8,25.9 20.5,40.4 8.2,49.4 -4.2,40.4" fill="#0b2318"/><g stroke="#0b2318" stroke-width="2.5"><path d="M50.0 35.0 L50.0 17.0"/><path d="M64.3 45.4 L81.4 39.8"/><path d="M58.8 62.1 L69.4 76.7"/><path d="M41.2 62.1 L30.6 76.7"/><path d="M35.7 45.4 L18.6 39.8"/></g></g><circle cx="50" cy="50" r="46" fill="none" stroke="#0b2318" stroke-width="2"/></svg>
+        <div class="fx-ball-shadow"></div>
+    </div>
+    <div class="container">
+        <div class="row align-items-center g-4 g-xl-5">
+            <div class="col-lg-7">
+                @if (lg != null) { <span class="hero-chip"><span class="live-dot"></span> Mùa giải @lg.Season đang diễn ra</span> }
+                <h1 class="hero-title"><span class="hero-hl">Thông tin giải đấu &amp; thống kê cầu thủ bóng đá Việt Nam</span></h1>
+                <p class="lead mt-3">Theo dõi bảng xếp hạng cá nhân, hồ sơ cầu thủ, đội bóng và tin tức nổi bật – <b>miễn phí, không cần đăng nhập</b>.</p>
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    @if (lg != null) { <a asp-action="Tournament" asp-route-id="@lg.Id" class="btn hero-btn hero-btn-main"><i class="bi bi-trophy-fill"></i> Xem @lg.Name @lg.Season <i class="bi bi-arrow-right ms-1 arr"></i></a> }
+                    <a asp-action="News" class="btn hero-btn hero-btn-glass"><i class="bi bi-newspaper"></i> Tin tức mới</a>
+                    @if (!authed) { <a asp-controller="Account" asp-action="Register" class="btn hero-btn hero-btn-glass"><i class="bi bi-person-plus"></i> Đăng ký HLV / Tuyển trạch</a> }
+                </div>
+                <ul class="hero-points">
+                    <li><i class="bi bi-check-circle-fill"></i> Dữ liệu thật V.League</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Hồ sơ &amp; chỉ số từng cầu thủ</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Gợi ý KNN &amp; trợ lý AI</li>
+                </ul>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                @if (Model.Standings.Any())
+                {
+                    var top = Model.Standings[0];
+                    <div class="spot-card">
+                        <div class="spot-ribbon"><i class="bi bi-trophy-fill"></i> Đội đầu bảng @(lg != null ? $"{lg.Name} {lg.Season}" : "")</div>
+                        <div class="d-flex align-items-center gap-3 mt-3">
+                            <span class="spot-avatar spot-crest">
+                                @if (!string.IsNullOrEmpty(top.Team.LogoUrl)) { <img src="@top.Team.LogoUrl" alt="Logo @top.Team.Name" /> }
+                                else { <b>@PortalHelper.Initials(top.Team.ShortName, top.Team.Name)</b> }
+                                <i class="spot-cup spot-rank">1</i>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="spot-name">@top.Team.Name</div>
+                                <div class="spot-sub">
+                                    <span>@top.Played trận · @top.Won thắng · @top.Drawn hòa · @top.Lost thua</span>
+                                </div>
+                                <div class="spot-form" title="5 trận gần nhất (cũ → mới)">
+                                    @foreach (var f in top.Form) { <span class="f-@f">@f</span> }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="spot-stats">
+                            <div><b class="count-up" data-to="@top.Points">@top.Points</b><span>điểm</span></div>
+                            <div><b>@top.GoalsFor–@top.GoalsAgainst</b><span>bàn thắng – thua</span></div>
+                            <div><b>@(top.GoalDiff > 0 ? "+" : "")@top.GoalDiff</b><span>hiệu số</span></div>
+                        </div>
+                        @if (Model.Standings.Count > 1)
+                        {
+                            <div class="spot-chase">
+                                <div class="t">Bám đuổi</div>
+                                @foreach (var r in Model.Standings.Skip(1).Take(2))
+                                {
+                                    <a asp-action="Team" asp-route-id="@r.Team.Id"><span class="n">@r.Rank</span> @r.Team.Name <small>@r.Played trận · HS @(r.GoalDiff > 0 ? "+" : "")@r.GoalDiff</small><b>@r.Points đ</b></a>
+                                }
+                            </div>
+                        }
+                        <div class="d-flex gap-2">
+                            <a asp-action="Team" asp-route-id="@top.Team.Id" class="btn spot-btn">Xem đội bóng <i class="bi bi-arrow-right"></i></a>
+                            @if (lg != null) { <a asp-action="Tournament" asp-route-id="@lg.Id" class="btn spot-btn spot-btn-ghost">Bảng xếp hạng</a> }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+}
+
+<div class="pv-kpis">
+    <div class="row g-3">
+        @foreach (var (v, l, ic) in new[] {
+            (Model.TournamentCount.ToString("N0", ScoutVN.Services.Fmt.VI), "Giải đấu", "bi-trophy"),
+            (Model.TeamCount.ToString("N0", ScoutVN.Services.Fmt.VI), "Đội bóng", "bi-shield-shaded"),
+            (Model.PlayerCount.ToString("N0", ScoutVN.Services.Fmt.VI), "Cầu thủ", "bi-people"),
+            (Model.SeasonGoals.ToString("N0", ScoutVN.Services.Fmt.VI), lg != null ? $"Bàn thắng {lg.Name} {lg.Season}" : "Bàn thắng", "bi-bullseye") })
+        {
+            <div class="col-6 col-lg-3"><div class="pv-kpi d-flex align-items-center gap-3">
+                <div class="kpi-ic"><i class="bi @ic"></i></div>
+                <div><div class="v count-up" data-to="@v.Replace(".", "")">@v</div><div class="l">@l</div></div>
+            </div></div>
+        }
+    </div>
+</div>
+
+@* ===== Tin nổi bật ===== *@
+@if (Model.Featured.Any() || Model.Latest.Any())
+{
+    <section class="pv-section">
+        <div class="pv-title"><h2>Tin nổi bật</h2><a asp-action="News">Tất cả tin tức <i class="bi bi-arrow-right"></i></a></div>
+        <div class="row g-3">
+            @if (Model.Featured.Any())
+            {
+                <div class="col-lg-7"><partial name="_NewsCard" model="Model.Featured[0]" view-data='new ViewDataDictionary(ViewData) { { "Big", true } }' /></div>
+                <div class="col-lg-5 d-flex flex-column gap-3 news-side-col">
+                    @foreach (var n in Model.Featured.Skip(1))
+                    {
+                        <partial name="_NewsSide" model="n" />
+                    }
+                    @foreach (var n in Model.Latest.Take(Math.Max(0, 3 - (Model.Featured.Count - 1))))
+                    {
+                        <partial name="_NewsSide" model="n" />
+                    }
+                </div>
+            }
+        </div>
+        @{ var rest = Model.Latest.Skip(Model.Featured.Any() ? Math.Max(0, 3 - (Model.Featured.Count - 1)) : 0).Take(3).ToList(); }
+        @if (rest.Any())
+        {
+            <div class="row g-3 mt-1">
+                @foreach (var n in rest) { <div class="col-md-4"><partial name="_NewsCard" model="n" /></div> }
+            </div>
+        }
+    </section>
+}
+
+@* ===== Điểm nhấn số liệu (tự động) ===== *@
+@if (Model.Highlights.Any())
+{
+    <section class="pv-section">
+        <div class="pv-title"><h2>Điểm nhấn số liệu @(lg != null ? $"– {lg.Name} {lg.Season}" : "")</h2>
+            <span class="small text-muted"><i class="bi bi-lightning-charge"></i> Tự động cập nhật từ dữ liệu thống kê</span></div>
+        <div class="row g-3">
+            @foreach (var h in Model.Highlights)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <a class="pv-card pv-hl" href="@h.Url">
+                        <div class="ic"><i class="bi @h.Icon"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="lb">@h.Label</div>
+                            <div class="tt text-truncate">@h.Title</div>
+                            <div class="vv">@h.Value</div>
+                            <div class="ss">@h.Sub</div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@* ===== Bảng xếp hạng đội ===== *@
+@if (lg != null && Model.Standings.Any())
+{
+    <section class="pv-section">
+        <div class="pv-title"><h2>Bảng xếp hạng – @lg.Name @lg.Season</h2><a asp-action="Tournament" asp-route-id="@lg.Id">Lịch thi đấu &amp; kết quả <i class="bi bi-arrow-right"></i></a></div>
+        <div class="pv-card"><partial name="_Standings" model="(Model.Standings, true)" /></div>
+    </section>
+}
+
+@* ===== Bảng xếp hạng cá nhân ===== *@
+@if (lg != null)
+{
+    <section class="pv-section">
+        <div class="pv-title"><h2>Bảng xếp hạng cá nhân – @lg.Name @lg.Season</h2><a asp-action="Tournament" asp-route-id="@lg.Id">Xem đầy đủ <i class="bi bi-arrow-right"></i></a></div>
+        <div class="row g-3">
+            <div class="col-lg-8"><partial name="_Boards" model="Model.Leaders" view-data='new ViewDataDictionary(ViewData) { { "BoardId", "home" } }' /></div>
+            <div class="col-lg-4">
+                <div class="pv-card p-3">
+                    <div class="fw-bold mb-2">Top 5 ghi bàn</div>
+                    <div style="height:260px"><canvas id="chTop" aria-label="Biểu đồ top 5 ghi bàn"></canvas></div>
+                    <div class="small text-muted mt-2">Bấm vào cột để xem hồ sơ cầu thủ.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@* ===== Giải đấu ===== *@
+<section class="pv-section">
+    <div class="pv-title"><h2>Giải đấu</h2><a asp-action="Tournaments">Tất cả giải đấu <i class="bi bi-arrow-right"></i></a></div>
+    <div class="row g-3">
+        @foreach (var t in Model.Tournaments)
+        {
+            <div class="col-md-6 col-xl-3"><partial name="_TournamentCard" model="t" /></div>
+        }
+    </div>
+</section>
+
+@* ===== Đội bóng ===== *@
+<section class="pv-section">
+    <div class="pv-title"><h2>Các đội bóng</h2><a asp-action="Teams">Xem tất cả <i class="bi bi-arrow-right"></i></a></div>
+    <div class="row g-3">
+        @foreach (var t in Model.Teams)
+        {
+            <div class="col-6 col-md-4 col-xl-3">
+                <a class="pv-card pv-team" asp-action="Team" asp-route-id="@t.Team.Id">
+                    <div class="pv-crest">@if (!string.IsNullOrEmpty(t.Team.LogoUrl)) { <img src="@t.Team.LogoUrl" alt="" /> } else { @PortalHelper.Initials(t.Team.ShortName, t.Team.Name) }</div>
+                    <div class="min-w-0"><div class="fw-bold text-truncate">@t.Team.Name</div><div class="small text-muted">@t.Team.City · @t.Players cầu thủ</div></div>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+@* ===== Kêu gọi đăng ký ===== *@
+@if (!authed)
+{
+    <section class="pv-section">
+        <div class="pv-cta row g-4 align-items-center mx-0">
+            <div class="col-lg-7">
+                <h2 class="fw-bold">Bạn là huấn luyện viên hoặc tuyển trạch viên?</h2>
+                <p style="color:#d6eadf">Đăng ký tài khoản miễn phí để dùng các công cụ hỗ trợ tuyển chọn:</p>
+                <ul class="list-unstyled mb-0">
+                    <li><i class="bi bi-check2-circle"></i> Phân tích hiệu suất, phân vị so với cầu thủ cùng vị trí</li>
+                    <li><i class="bi bi-check2-circle"></i> So sánh trực tiếp 2–4 cầu thủ bằng biểu đồ radar</li>
+                    <li><i class="bi bi-check2-circle"></i> Xếp hạng cầu thủ theo bộ tiêu chí và trọng số tùy chỉnh</li>
+                    <li><i class="bi bi-check2-circle"></i> Gợi ý cầu thủ phù hợp bằng thuật toán KNN &amp; trợ lý AI</li>
+                </ul>
+            </div>
+            <div class="col-lg-5 text-lg-end">
+                <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg fw-semibold"><i class="bi bi-person-plus"></i> Đăng ký ngay</a>
+                <div class="small mt-2" style="color:#d6eadf">Đã có tài khoản? <a asp-controller="Account" asp-action="Login" class="text-white">Đăng nhập</a></div>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // Số đếm tăng dần khi trang mở (KPI và thẻ Vua phá lưới)
+        (function () {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            document.querySelectorAll('.count-up').forEach(function (el) {
+                var to = parseInt(el.dataset.to, 10); if (!(to > 0)) return;
+                var t0 = null, dur = 1200, fmt = function (n) { return n.toLocaleString('vi-VN'); };
+                el.textContent = '0';
+                requestAnimationFrame(function step(t) {
+                    if (!t0) t0 = t; var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+                    el.textContent = fmt(Math.round(to * e)); if (k < 1) requestAnimationFrame(step);
+                });
+            });
+        })();
+    </script>
+    @if (lg != null && Model.Leaders.Goals.Any())
+    {
+        <partial name="_ChartScripts" />
+        <script>
+            const g = @Html.Raw(Json.Serialize(Model.Leaders.Goals.Take(5).Select(r => new { name = r.Player.FullName, v = r.Raw, url = Url.Action("Player", "Portal", new { id = r.Player.Id }) })));
+            SV.bar('chTop', g.map(x => x.name), g.map(x => x.v), { horizontal: true, label: 'Bàn thắng', links: g.map(x => x.url) });
+        </script>
+    }
+}

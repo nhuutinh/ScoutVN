@@ -1,0 +1,18 @@
+@model Team
+@{ ViewData["Title"] = "Xóa đội bóng"; }
+<div class="page-header"><h1 class="text-danger">Xóa đội bóng</h1></div>
+<div class="card border-danger"><div class="card-body">
+    <p>Bạn có chắc muốn xóa đội bóng <b>@Model.Name</b> (@Model.City)?</p>
+    @if (Model.Players.Any())
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> Đội đang có <b>@Model.Players.Count</b> cầu thủ.
+            Sau khi xóa, các cầu thủ này <b>không bị xóa</b> mà chuyển sang trạng thái <b>Tự do</b> (không thuộc đội nào).
+        </div>
+    }
+    <form asp-action="Delete" method="post" class="d-flex gap-2">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Xác nhận xóa</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+</div></div>

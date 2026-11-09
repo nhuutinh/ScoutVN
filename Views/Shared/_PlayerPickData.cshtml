@@ -1,0 +1,2 @@
+@model List<ScoutVN.Models.ViewModels.PlayerPick>
+<script>window.SVPlayers = @Html.Raw(Json.Serialize(Model.Select(p => new { id = p.Id, name = p.Name, info = p.Info })));</script>

@@ -1,0 +1,70 @@
+@model (List<string> Needs, ScoutVN.Services.NeedFilter Filter, PositionGroup? Group, bool Missing)
+@using System.Globalization
+@* Bộ chọn nhu cầu chuyên môn của HLV + điều kiện cứng bằng đơn vị thực *@
+@{
+    var f = Model.Filter;
+    var inv = CultureInfo.InvariantCulture;
+}
+<div class="mb-2 small fw-semibold text-muted text-uppercase">Cần cầu thủ mạnh về <span class="fw-normal text-lowercase">(chọn một hoặc nhiều)</span></div>
+<div class="need-error alert alert-warning py-2 small mb-2" role="alert" @(Model.Missing ? "" : "hidden")><i class="bi bi-exclamation-triangle"></i> Vui lòng chọn <b>ít nhất một tiêu chí</b> trước khi tìm.</div>
+<div class="need-chips mb-3">
+    @foreach (var n in ScoutVN.Services.CoachNeeds.All)
+    {
+        var on = Model.Needs.Contains(n.Key);
+        var scope = n.GkOnly ? "gk" : n.OutfieldOnly ? "out" : "all";
+        var hidden = Model.Group == PositionGroup.GK ? n.OutfieldOnly : n.GkOnly;
+        <span class="need-item" data-scope="@scope" @(hidden ? "hidden" : "")>
+            <input type="checkbox" class="btn-check" name="n" value="@n.Key" id="need_@n.Key" checked="@(on && !hidden)" disabled="@hidden" autocomplete="off" />
+            <label class="btn btn-sm need-chip" for="need_@n.Key" title="@n.Hint"><i class="bi @n.Icon"></i> @n.Name</label>
+        </span>
+    }
+</div>
+<div class="row g-2">
+    <div class="col-6 col-md-4 col-xl">
+        <label class="form-label small">Chiều cao từ (cm)</label>
+        <input name="minHeight" type="number" min="150" max="210" step="1" value="@f.MinHeight" placeholder="VD 180" class="form-control form-control-sm" />
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <label class="form-label small">Tốc độ từ (km/h)</label>
+        <select name="minSpeed" class="form-select form-select-sm">
+            <option value="">Không yêu cầu</option>
+            @foreach (var v in new[] { 30.0, 31.0, 32.0, 33.0, 34.0 })
+            {
+                <option value="@v.ToString(inv)" selected="@(f.MinSpeed == v)">≥ @v km/h</option>
+            }
+        </select>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <label class="form-label small">Chân thuận</label>
+        <select name="foot" class="form-select form-select-sm">
+            <option value="">Không yêu cầu</option>
+            <option value="Left" selected="@(f.Foot == "Left")">Chân trái</option>
+            <option value="Right" selected="@(f.Foot == "Right")">Chân phải</option>
+        </select>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <label class="form-label small">Nguồn cầu thủ</label>
+        <select name="origin" class="form-select form-select-sm">
+            <option value="">Tất cả</option>
+            <option value="vn" selected="@(f.Origin == "vn")">Cầu thủ Việt Nam</option>
+            <option value="foreign" selected="@(f.Origin == "foreign")">Ngoại binh</option>
+        </select>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <label class="form-label small">Giá trị tối đa</label>
+        <select name="maxValue" class="form-select form-select-sm">
+            <option value="">Không giới hạn</option>
+            @foreach (var v in new[] { 2.0, 5.0, 10.0, 20.0, 30.0 })
+            {
+                <option value="@v.ToString(inv)" selected="@(f.MaxValue == v)">≤ @v tỷ VNĐ</option>
+            }
+        </select>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <label class="form-label small">Độ tuổi</label>
+        <div class="input-group input-group-sm">
+            <input name="minAge" type="number" min="14" max="45" value="@f.MinAge" placeholder="từ" class="form-control" />
+            <input name="maxAge" type="number" min="14" max="45" value="@(Context.Request.Query.ContainsKey("maxAge") ? f.MaxAge : null)" placeholder="đến" class="form-control" />
+        </div>
+    </div>
+</div>

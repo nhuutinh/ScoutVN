@@ -1,0 +1,106 @@
+@{
+    ViewData["Title"] = "Trợ lý AI";
+    var configured = (bool)(ViewBag.Configured ?? false);
+}
+<div class="page-header">
+    <h1><i class="bi bi-chat-dots text-success"></i> Trợ lý AI</h1>
+    <a asp-controller="Recommend" asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-stars"></i> Gợi ý KNN thủ công</a>
+</div>
+
+@if (configured)
+{
+    <div class="alert alert-success small"><i class="bi bi-robot"></i> Đã kết nối AI: trợ lý tự chọn công cụ tra cứu CSDL (cầu thủ, đội, trận, bảng xếp hạng, gợi ý KNN) để trả lời câu hỏi.</div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card chat-card">
+            <div class="card-body chat-log" id="chatLog">
+                <div class="chat-msg bot"><div class="bubble">
+                    Xin chào! Tôi có thể <b>tra cứu số liệu V.League</b> (ai ghi nhiều bàn nhất, ai thi đấu nhiều nhất, đội nào dẫn đầu, kết quả các vòng, thông tin cầu thủ – đội bóng, so sánh hai cầu thủ…)
+                    và <b>gợi ý cầu thủ</b> theo vị trí, độ tuổi, điểm mạnh hoặc một cầu thủ mẫu (thuật toán KNN).
+                </div></div>
+            </div>
+            <div class="card-footer">
+                <form id="askForm" class="d-flex gap-2">
+                    @Html.AntiForgeryToken()
+                    <input id="q" class="form-control" maxlength="500" autocomplete="off" placeholder="VD: Ai ghi nhiều bàn nhất mùa này?  ·  Tìm tiền đạo dưới 23 tuổi ghi bàn tốt" required />
+                    <button class="btn btn-success" id="sendBtn"><i class="bi bi-send"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card"><div class="card-header">Câu hỏi gợi ý</div>
+            <div class="list-group list-group-flush small" id="samples">
+                <div class="list-group-item bg-light fw-semibold small text-uppercase text-muted">Tra cứu số liệu</div>
+                <button class="list-group-item list-group-item-action">Cầu thủ nào ghi nhiều bàn nhất mùa này?</button>
+                <button class="list-group-item list-group-item-action">Cầu thủ nào thi đấu nhiều phút nhất?</button>
+                <button class="list-group-item list-group-item-action">Đội nào đang dẫn đầu bảng xếp hạng?</button>
+                <button class="list-group-item list-group-item-action">Thủ môn nào giữ sạch lưới nhiều nhất?</button>
+                <button class="list-group-item list-group-item-action">Top 5 ngoại binh ghi bàn mùa trước</button>
+                <button class="list-group-item list-group-item-action">Nguyễn Hoàng Đức ghi bao nhiêu bàn?</button>
+                <button class="list-group-item list-group-item-action">So sánh Lucão và Milan Makarić</button>
+                <button class="list-group-item list-group-item-action">Kết quả trận gần nhất của Hà Nội FC</button>
+                <button class="list-group-item list-group-item-action">Câu lạc bộ nào có định giá cao nhất?</button>
+                <div class="list-group-item bg-light fw-semibold small text-uppercase text-muted">Gợi ý tuyển chọn</div>
+                <button class="list-group-item list-group-item-action">Tìm 5 tiền đạo dưới 23 tuổi ghi bàn tốt và có tốc độ</button>
+                <button class="list-group-item list-group-item-action">Cần một trung vệ phòng ngự tốt, thể lực khỏe</button>
+                <button class="list-group-item list-group-item-action">Tìm cầu thủ giống Nguyễn Lê Phát</button>
+            </div>
+        </div>
+        <div class="card mt-3"><div class="card-body small text-muted">
+            <b>Cách hoạt động:</b> khi có khóa API, AI tự gọi các công cụ tra cứu CSDL (cầu thủ, đội, trận, bảng xếp hạng, định giá, gợi ý KNN)
+            rồi trả lời dựa trên đúng số liệu đó. Chưa có khóa: câu hỏi <i>tra cứu</i> được trả lời theo mẫu câu, câu hỏi <i>tuyển chọn</i>
+            được trích yêu cầu (vị trí, tuổi, điểm mạnh, cầu thủ mẫu) rồi chạy KNN.
+        </div></div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    const log = document.getElementById('chatLog'), form = document.getElementById('askForm'), q = document.getElementById('q'), btn = document.getElementById('sendBtn');
+    const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    // Định dạng tối giản cho câu trả lời: **đậm**, gạch đầu dòng, xuống dòng
+    const md = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split('\n').map(l => /^\s*[-*•]\s+/.test(l) ? '<li>' + l.replace(/^\s*[-*•]\s+/, '') + '</li>' : l + '<br>').join('').replace(/(<li>.*?<\/li>)+/g, m => '<ul>' + m + '</ul>');
+    function add(cls, html) { const d = document.createElement('div'); d.className = 'chat-msg ' + cls; d.innerHTML = '<div class="bubble">' + html + '</div>'; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
+    function table(cs) {
+        if (!cs.length) return '';
+        return '<div class="table-responsive mt-2"><table class="table table-sm small mb-0 bg-white"><thead><tr><th>#</th><th>Cầu thủ</th><th>Đội</th><th>Tuổi</th><th>Phút</th><th>Bàn</th><th>% TG thi đấu</th><th>Phù hợp</th></tr></thead><tbody>' +
+            cs.map((c, i) => `<tr><td>${i + 1}</td><td><a href="/Analysis/Player/${c.id}">${esc(c.name)}</a> <span class="pos-badge">${c.position}</span></td><td>${esc(c.team)}</td><td>${c.age}</td><td>${c.minutes}</td><td>${c.goals}</td><td>${c.minuteShare == null ? '–' : c.minuteShare.toFixed(1) + '%'}</td><td><b>${c.match.toFixed(1)}%</b></td></tr>`).join('') +
+            '</tbody></table></div>';
+    }
+    // Bảng số liệu cho câu hỏi tra cứu
+    function grid(d) {
+        if (!d.columns || !d.columns.length || !d.rows.length) return '';
+        return '<div class="table-responsive mt-2"><table class="table table-sm small mb-0 bg-white"><thead><tr>' + d.columns.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>' +
+            d.rows.map((r, i) => '<tr>' + r.map((c, j) => {
+                const link = d.links && d.links[i];
+                const isName = d.columns[j] === 'Cầu thủ' || d.columns[j] === 'Đội bóng';
+                return `<td>${link && isName ? `<a href="${esc(link)}">${esc(c)}</a>` : esc(c)}</td>`;
+            }).join('') + '</tr>').join('') + '</tbody></table></div>';
+    }
+    async function ask(text) {
+        add('user', esc(text));
+        const wait = add('bot', '<span class="spinner-border spinner-border-sm"></span> Đang phân tích…');
+        btn.disabled = true;
+        try {
+            const r = await fetch('/Assistant/Ask', { method: 'POST', headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token }, body: JSON.stringify({ question: text }) });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error || 'Lỗi');
+            wait.querySelector('.bubble').innerHTML =
+                `<div class="small text-muted mb-1"><i class="bi bi-funnel"></i> Hiểu yêu cầu: ${esc(d.understood)}</div>` +
+                md(d.answer) + (d.kind === 'stats' || d.kind === 'ai' || (d.columns && d.columns.length) ? grid(d) : table(d.candidates)) +
+                (d.notice ? `<div class="small text-warning-emphasis mt-2"><i class="bi bi-info-circle"></i> ${esc(d.notice)}</div>` : '') +
+                `<div class="small text-muted mt-1">${d.mode === 'llm' ? '<i class="bi bi-robot"></i> Trả lời bởi AI' + (d.kind === 'ai' ? ' (tự tra cứu CSDL)' : '') : '<i class="bi bi-cpu"></i> Trả lời tự động (' + (d.kind === 'stats' ? 'tra cứu CSDL' : d.kind === 'help' ? 'hướng dẫn' : 'KNN') + ')'}</div>`;
+        } catch (e) {
+            wait.querySelector('.bubble').innerHTML = '<span class="text-danger">Không gửi được câu hỏi: ' + esc(e.message) + '</span>';
+        } finally { btn.disabled = false; log.scrollTop = log.scrollHeight; }
+    }
+    form.addEventListener('submit', e => { e.preventDefault(); const t = q.value.trim(); if (t) { q.value = ''; ask(t); } });
+    document.querySelectorAll('#samples button').forEach(b => b.addEventListener('click', () => ask(b.textContent)));
+})();
+</script>
+}

@@ -1,0 +1,165 @@
+@model PlayerIndexViewModel
+@{
+    ViewData["Title"] = "Cầu thủ";
+    var isAdmin = User.IsInRole("Admin");
+    var f = Model.Filter;
+    List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> teams = ViewBag.Teams;
+    List<string> nations = ViewBag.Nationalities;
+}
+<div class="page-header">
+    <h1><i class="bi bi-person-badge text-success"></i> Cầu thủ</h1>
+    @if (isAdmin) { <a asp-action="Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm cầu thủ</a> }
+</div>
+
+<div class="card filter-card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end auto-submit">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">Tên cầu thủ / quê quán</label>
+                <input name="Keyword" value="@f.Keyword" class="form-control" placeholder="Gõ có dấu hoặc không dấu" />
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label">Đội bóng</label>
+                <select name="TeamId" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    <option value="0" selected="@(f.TeamId == 0)">(Chưa có đội / Tự do)</option>
+                    @foreach (var t in teams) { <option value="@t.Value" selected="@(t.Value == f.TeamId?.ToString())">@t.Text</option> }
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label">Vị trí</label>
+                <select name="Position" class="form-select" asp-items="EnumExtensions.ToSelectList(f.Position)">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+            <div class="col-lg-1 col-md-4 col-6">
+                <label class="form-label">Tuổi từ</label>
+                <input name="MinAge" value="@f.MinAge" type="number" min="14" max="45" class="form-control" />
+            </div>
+            <div class="col-lg-1 col-md-4 col-6">
+                <label class="form-label">đến</label>
+                <input name="MaxAge" value="@f.MaxAge" type="number" min="14" max="45" class="form-control" />
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">Quốc tịch</label>
+                <select name="Nationality" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    <option value="__foreign" selected="@(f.Nationality == "__foreign")">(Tất cả ngoại binh)</option>
+                    @foreach (var n in nations) { <option value="@n" selected="@(n == f.Nationality)">@n</option> }
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label">Chân thuận</label>
+                <select name="Foot" class="form-select" asp-items="EnumExtensions.ToSelectList(f.Foot)">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label">Trạng thái</label>
+                <select name="Status" class="form-select" asp-items="EnumExtensions.ToSelectList(f.Status)">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label">Chiều cao tối thiểu (cm)</label>
+                <input name="MinHeight" value="@f.MinHeight" type="number" min="140" max="220" class="form-control" />
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label">Sắp xếp</label>
+                <select name="Sort" class="form-select">
+                    @foreach (var (k, v) in new[] { ("", "Chỉ số tổng (cao → thấp)"), ("name", "Tên A → Z"), ("name_desc", "Tên Z → A"), ("age", "Trẻ nhất"), ("age_desc", "Lớn tuổi nhất"), ("value", "Giá trị cao nhất"), ("team", "Theo đội"), ("position", "Theo vị trí"), ("updated", "Cập nhật gần đây") })
+                    {
+                        <option value="@k" selected="@((f.Sort ?? "") == k)">@v</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-1 col-md-4">
+                <label class="form-label">Mỗi trang</label>
+                <select name="PageSize" class="form-select">
+                    @foreach (var n in new[] { 15, 30, 50 }) { <option value="@n" selected="@(f.PageSize == n)">@n</option> }
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-8 d-flex gap-2">
+                <button class="btn btn-success"><i class="bi bi-search"></i> Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form asp-controller="Analysis" asp-action="Compare" method="get" id="cmpForm">
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="small text-muted"><i class="bi bi-check2-square"></i> Tick chọn 2–4 cầu thủ để so sánh</div>
+    <button type="submit" id="cmpBtn" class="btn btn-sm btn-success" disabled><i class="bi bi-arrow-left-right"></i> So sánh (<span id="cmpCount">0</span>)</button>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+            <tr>
+                <th style="width:30px"></th>
+                <th></th>
+                <th><partial name="_SortLink" model='("name", "Họ tên")' /></th>
+                <th><partial name="_SortLink" model='("position", "Vị trí")' /></th>
+                <th><partial name="_SortLink" model='("team", "Đội bóng")' /></th>
+                <th class="text-center"><partial name="_SortLink" model='("age", "Tuổi")' /></th>
+                <th>Quốc tịch</th>
+                <th class="text-center">Cao</th>
+                <th class="text-center">Chân</th>
+                <th class="text-end"><partial name="_SortLink" model='("value", "Giá trị")' /></th>
+                <th class="text-center"><partial name="_SortLink" model='("", "Chỉ số tổng")' /></th>
+                <th class="text-end">Thao tác</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model.Players)
+            {
+                <tr>
+                    <td><input type="checkbox" class="form-check-input cmp-check" name="ids" value="@p.Id" aria-label="Chọn để so sánh" /></td>
+                    <td style="width:46px"><partial name="_PlayerAvatar" model="p" /></td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@p.Id" class="fw-semibold">@p.FullName</a>
+                        @if (p.Status != PlayerStatus.Active)
+                        {
+                            <span class="badge @(p.Status == PlayerStatus.Injured ? "bg-danger" : "bg-secondary") ms-1">@p.Status.DisplayName()</span>
+                        }
+                    </td>
+                    <td><span class="pos-badge" title="@p.Position.DisplayName()">@p.Position</span></td>
+                    <td>@(p.Team?.Name ?? "—")</td>
+                    <td class="text-center">@p.Age</td>
+                    <td>@p.Nationality</td>
+                    <td class="text-center">@p.HeightCm</td>
+                    <td class="text-center">@p.PreferredFoot.DisplayName()</td>
+                    <td class="text-end">@ScoutVN.Services.Fmt.Money(p.MarketValue, false)</td>
+                    <td class="text-center"><span class="ovr badge @RatingHelper.BadgeClass(p.Overall)">@p.Overall</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary" title="Xem"><i class="bi bi-eye"></i></a>
+                        @if (isAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <a asp-action="Delete" asp-route-id="@p.Id" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Players.Any()) { <tr><td colspan="12" class="text-center text-muted py-4">Không tìm thấy cầu thủ phù hợp với điều kiện lọc.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>
+</form>
+<partial name="_Pager" model="Model.Players" />
+
+@section Scripts {
+    <script>
+        // Giới hạn chọn tối đa 4 cầu thủ để so sánh
+        const checks = document.querySelectorAll('.cmp-check');
+        const refresh = () => {
+            const n = [...checks].filter(c => c.checked).length;
+            document.getElementById('cmpCount').textContent = n;
+            document.getElementById('cmpBtn').disabled = n < 2;
+            checks.forEach(c => { if (!c.checked) c.disabled = n >= 4; });
+        };
+        checks.forEach(c => c.addEventListener('change', refresh));
+    </script>
+}

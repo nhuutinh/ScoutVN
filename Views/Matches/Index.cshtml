@@ -1,0 +1,55 @@
+@model List<Match>
+@{
+    ViewData["Title"] = "Trận đấu";
+    var isAdmin = User.IsInRole("Admin");
+    int? tid = ViewBag.TournamentId;
+    var played = Model.Count(m => m.IsPlayed);
+}
+<div class="page-header">
+    <h1><i class="bi bi-calendar-event text-success"></i> Trận đấu</h1>
+    <div class="d-flex gap-2">
+        @if (tid.HasValue) { <a asp-controller="Tournaments" asp-action="Details" asp-route-id="@tid" class="btn btn-outline-success btn-sm"><i class="bi bi-list-ol"></i> Bảng xếp hạng</a> }
+        @if (isAdmin) { <a asp-action="Create" asp-route-tournamentId="@tid" asp-route-round="@ViewBag.Round" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm trận đấu</a> }
+    </div>
+</div>
+
+<div class="card filter-card mb-3"><div class="card-body">
+    <form method="get" class="row g-2 align-items-end auto-submit">
+        <div class="col-md-4"><label class="form-label">Giải đấu</label>
+            <select name="tournamentId" class="form-select" asp-items="ViewBag.Tournaments"></select></div>
+        <div class="col-md-2"><label class="form-label">Vòng</label>
+            <select name="round" class="form-select" asp-items="ViewBag.Rounds"><option value="">-- Tất cả --</option></select></div>
+        <div class="col-md-3"><label class="form-label">Đội bóng</label>
+            <select name="teamId" class="form-select" asp-items="ViewBag.Teams"><option value="">-- Tất cả --</option></select></div>
+        <div class="col-md-3 small text-muted">@Model.Count trận · @played đã có kết quả · @Model.Where(m => m.IsPlayed).Sum(m => m.HomeGoals!.Value + m.AwayGoals!.Value) bàn thắng</div>
+    </form>
+</div></div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" data-page-size="14">
+            <thead><tr><th class="text-center">Vòng</th><th>Thời gian</th><th class="text-end">Đội nhà</th><th class="text-center">Tỉ số</th><th>Đội khách</th>@if (isAdmin) { <th></th> }</tr></thead>
+            <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td class="text-center">@m.Round</td>
+                    <td class="small">@m.KickOff.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="text-end @(m.HomeGoals > m.AwayGoals ? "fw-bold" : "")">@m.HomeTeam?.Name</td>
+                    <td class="text-center"><span class="match-score d-inline-block px-3">@(m.IsPlayed ? $"{m.HomeGoals} – {m.AwayGoals}" : "vs")</span></td>
+                    <td class="@(m.AwayGoals > m.HomeGoals ? "fw-bold" : "")">@m.AwayTeam?.Name</td>
+                    @if (isAdmin)
+                    {
+                        <td class="text-nowrap text-end">
+                            <a asp-action="Edit" asp-route-id="@m.Id" class="btn btn-sm btn-link p-0" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <a asp-action="Delete" asp-route-id="@m.Id" class="btn btn-sm btn-link p-0 text-danger" title="Xóa"><i class="bi bi-trash"></i></a>
+                        </td>
+                    }
+                </tr>
+            }
+            @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Không có trận đấu phù hợp.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer small text-muted">Giờ thi đấu theo giờ Việt Nam. Nguồn kết quả: FotMob.</div>
+</div>

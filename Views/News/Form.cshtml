@@ -1,0 +1,45 @@
+@model News
+@{ ViewData["Title"] = Model.Id == 0 ? "Viết bài mới" : "Sửa bài viết"; }
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<form asp-action="Save" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="ViewCount" />
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card"><div class="card-body row g-3">
+                <div class="col-12"><label asp-for="Title" class="form-label"></label> <span class="text-danger">*</span>
+                    <input asp-for="Title" class="form-control form-control-lg" /><span asp-validation-for="Title" class="text-danger small"></span></div>
+                <div class="col-12"><label asp-for="Summary" class="form-label"></label> <span class="text-danger">*</span>
+                    <textarea asp-for="Summary" class="form-control" rows="2"></textarea><span asp-validation-for="Summary" class="text-danger small"></span></div>
+                <div class="col-12"><label asp-for="Content" class="form-label"></label> <span class="text-danger">*</span>
+                    <textarea asp-for="Content" class="form-control" rows="14"></textarea>
+                    <div class="form-text">Để một dòng trống giữa các đoạn văn.</div>
+                    <span asp-validation-for="Content" class="text-danger small"></span></div>
+            </div></div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card"><div class="card-header">Thiết lập</div><div class="card-body row g-3">
+                <div class="col-12"><label asp-for="Category" class="form-label"></label>
+                    <select asp-for="Category" class="form-select" asp-items="EnumExtensions.ToSelectList<NewsCategory>()"></select></div>
+                <div class="col-12"><label asp-for="TournamentId" class="form-label"></label>
+                    <select asp-for="TournamentId" class="form-select" asp-items="ViewBag.Tournaments"><option value="">-- Không --</option></select></div>
+                <div class="col-12"><label asp-for="PublishedAt" class="form-label"></label>
+                    <input asp-for="PublishedAt" type="datetime-local" class="form-control" /></div>
+                <div class="col-12"><label asp-for="AuthorName" class="form-label"></label><input asp-for="AuthorName" class="form-control" /></div>
+                <div class="col-12"><label asp-for="ImageUrl" class="form-label"></label><input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
+                    <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+                    <div class="form-text">Để trống sẽ dùng ảnh minh họa theo chuyên mục.</div></div>
+                <div class="col-12">
+                    <div class="form-check form-switch"><input asp-for="IsPublished" class="form-check-input" /><label asp-for="IsPublished" class="form-check-label"></label></div>
+                    <div class="form-check form-switch"><input asp-for="IsFeatured" class="form-check-input" /><label asp-for="IsFeatured" class="form-check-label"></label></div>
+                </div>
+            </div></div>
+            <div class="d-grid gap-2 mt-3">
+                <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Lưu bài viết</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            </div>
+        </div>
+    </div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

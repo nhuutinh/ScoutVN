@@ -1,0 +1,70 @@
+@model Team
+@{ ViewData["Title"] = Model.Name; var isAdmin = User.IsInRole("Admin"); }
+<div class="page-header">
+    <h1>Hồ sơ đội bóng</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Danh sách</a>
+        @if (isAdmin)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Sửa</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Xóa</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body text-center pb-2">
+                <partial name="_TeamCrest" model="Model" view-data='new ViewDataDictionary(ViewData) { { "Size", "lg" } }' />
+                <h2 class="h4 mt-3 mb-1">@Model.Name</h2>
+                <div class="text-muted">@Model.City@(string.IsNullOrEmpty(Model.Stadium) ? "" : " · Sân " + Model.Stadium)</div>
+            </div>
+            <div class="card-body pt-2">
+                <dl class="row mb-0 small">
+                    @if (ViewBag.Value is ScoutVN.Services.ClubValue cv)
+                    {
+                        <dt class="col-5">Định giá CLB</dt><dd class="col-7 fw-bold text-success"><partial name="_ClubValue" model="cv" /></dd>
+                    }
+                    <dt class="col-5">Tên viết tắt</dt><dd class="col-7">@(Model.ShortName ?? "-")</dd>
+                    <dt class="col-5">Tỉnh / TP</dt><dd class="col-7">@Model.City</dd>
+                    <dt class="col-5">Sân nhà</dt><dd class="col-7">@(Model.Stadium ?? "-")</dd>
+                    <dt class="col-5">Năm thành lập</dt><dd class="col-7">@(Model.FoundedYear?.ToString() ?? "-")</dd>
+                    <dt class="col-5">HLV trưởng</dt><dd class="col-7">@(Model.HeadCoach ?? "-")</dd>
+                    <dt class="col-5">Số cầu thủ</dt><dd class="col-7">@Model.Players.Count</dd>
+                    <dt class="col-5">Tuổi TB</dt><dd class="col-7">@(Model.Players.Any() ? Model.Players.Average(p => p.Age).ToString("0.0") : "-")</dd>
+                    <dt class="col-5">Chỉ số tổng TB</dt><dd class="col-7">@(Model.Players.Any() ? Model.Players.Average(p => p.Overall).ToString("0.0") : "-")</dd>
+                </dl>
+                @if (!string.IsNullOrEmpty(Model.Description)) { <hr /><p class="small mb-0">@Model.Description</p> }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Danh sách cầu thủ</span>
+                @if (isAdmin) { <a asp-controller="Players" asp-action="Create" asp-route-teamId="@Model.Id" class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Thêm cầu thủ vào đội</a> }
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" data-page-size="10">
+                    <thead><tr><th>Số</th><th>Cầu thủ</th><th>Vị trí</th><th class="text-center">Tuổi</th><th>Quốc tịch</th><th class="text-center">Chỉ số tổng</th></tr></thead>
+                    <tbody>
+                    @foreach (var p in Model.Players)
+                    {
+                        <tr>
+                            <td>@p.ShirtNumber</td>
+                            <td><a asp-controller="Players" asp-action="Details" asp-route-id="@p.Id">@p.FullName</a>
+                                @if (p.Status == PlayerStatus.Injured) { <span class="badge bg-danger ms-1">Chấn thương</span> }</td>
+                            <td><span class="pos-badge">@p.Position</span></td>
+                            <td class="text-center">@p.Age</td>
+                            <td>@p.Nationality</td>
+                            <td class="text-center"><span class="ovr badge @RatingHelper.BadgeClass(p.Overall)">@p.Overall</span></td>
+                        </tr>
+                    }
+                    @if (!Model.Players.Any()) { <tr><td colspan="6" class="text-center text-muted py-3">Đội chưa có cầu thủ.</td></tr> }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

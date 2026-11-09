@@ -1,0 +1,12 @@
+@model Match
+@{ ViewData["Title"] = "Xóa trận đấu"; }
+<div class="page-header"><h1 class="text-danger">Xóa trận đấu</h1></div>
+<div class="card border-danger"><div class="card-body">
+    <p>Xóa trận <b>@Model.HomeTeam?.Name @(Model.IsPlayed ? $"{Model.HomeGoals} – {Model.AwayGoals}" : "vs") @Model.AwayTeam?.Name</b>
+        (vòng @Model.Round, @Model.Tournament?.Name @Model.Tournament?.Season)? Bảng xếp hạng sẽ được tính lại.</p>
+    <form asp-action="Delete" method="post" class="d-flex gap-2">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Xác nhận xóa</button>
+        <a asp-action="Index" asp-route-tournamentId="@Model.TournamentId" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+</div></div>

@@ -1,0 +1,33 @@
+@model LoginViewModel
+@{ ViewData["Title"] = "Đăng nhập"; Layout = "_AuthLayout"; }
+<h2 class="h5 mb-3 fw-bold">Đăng nhập hệ thống</h2>
+<form asp-action="Login" method="post">
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label"></label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input asp-for="Username" class="form-control" autofocus />
+        </div>
+        <span asp-validation-for="Username" class="text-danger small"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input asp-for="Password" class="form-control" />
+        </div>
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="RememberMe" class="form-check-input" />
+        <label asp-for="RememberMe" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-success w-100"><i class="bi bi-box-arrow-in-right"></i> Đăng nhập</button>
+</form>
+<hr />
+<div class="text-center small">
+    Chưa có tài khoản? <a asp-action="Register">Đăng ký tài khoản HLV / Tuyển trạch viên</a>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,13 @@
+@model List<TournamentCard>
+@{ ViewData["Title"] = "Giải đấu"; Layout = "_PublicLayout"; }
+<section class="pv-section">
+    <div class="pv-title"><h2>Giải đấu</h2></div>
+    @foreach (var season in Model.GroupBy(t => t.Tournament.Season))
+    {
+        <h5 class="fw-bold text-muted mt-3 mb-2">Mùa giải @season.Key</h5>
+        <div class="row g-3 mb-2">
+            @foreach (var t in season) { <div class="col-md-6 col-xl-3"><partial name="_TournamentCard" model="t" /></div> }
+        </div>
+    }
+    @if (!Model.Any()) { <div class="text-muted">Chưa có giải đấu.</div> }
+</section>

@@ -1,0 +1,17 @@
+@model News
+@{ var big = ViewData["Big"] is true; var url = Url.Action("NewsDetail", "Portal", new { id = Model.Id, slug = PortalHelper.Slug(Model.Title) }); }
+<a class="pv-card d-block" href="@url">
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <div class="pv-cover" style="background-image:url('@Model.ImageUrl')"><span class="cat">@Model.Category.DisplayName()</span></div>
+    }
+    else
+    {
+        <div class="pv-cover cov-@((int)Model.Category) @(big ? "big" : "")"><i class="bi @PortalHelper.CategoryIcon(Model.Category)"></i><span class="cat">@Model.Category.DisplayName()</span></div>
+    }
+    <div class="pv-news-body @(big ? "big" : "")">
+        <h3 class="@(big ? "" : "clamp-2")">@Model.Title</h3>
+        <p class="@(big ? "clamp-3" : "clamp-2")">@Model.Summary</p>
+        <div class="pv-meta"><i class="bi bi-clock"></i> @PortalHelper.TimeAgo(Model.PublishedAt) · <i class="bi bi-eye"></i> @Model.ViewCount</div>
+    </div>
+</a>

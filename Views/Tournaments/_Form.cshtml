@@ -1,0 +1,36 @@
+@model Tournament
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<input type="hidden" asp-for="Id" />
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label> <span class="text-danger">*</span>
+        <input asp-for="Name" class="form-control" placeholder="VD: V.League 1" />
+        <span asp-validation-for="Name" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Season" class="form-label"></label> <span class="text-danger">*</span>
+        <input asp-for="Season" class="form-control" placeholder="2025/26" />
+        <span asp-validation-for="Season" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Type" class="form-label"></label>
+        <select asp-for="Type" class="form-select" asp-items="EnumExtensions.ToSelectList<TournamentType>()"></select>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Organizer" class="form-label"></label>
+        <input asp-for="Organizer" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="StartDate" class="form-label"></label>
+        <input asp-for="StartDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="EndDate" class="form-label"></label>
+        <input asp-for="EndDate" class="form-control" />
+        <span asp-validation-for="EndDate" class="text-danger small"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+</div>

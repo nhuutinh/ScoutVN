@@ -1,0 +1,52 @@
+@model Tournament
+@{
+    ViewData["Title"] = $"{Model.Name} {Model.Season}";
+    var isAdmin = User.IsInRole("Admin");
+    List<PlayerStat> scorers = ViewBag.TopScorers, cards = ViewBag.TopCards, minutes = ViewBag.TopMinutes;
+    List<ScoutVN.Services.StandingRow> standings = ViewBag.Standings;
+    List<Match> matches = ViewBag.Matches;
+}
+<div class="page-header">
+    <h1><i class="bi bi-trophy text-warning"></i> @Model.Name <span class="text-muted fw-normal">@Model.Season</span></h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Danh sách</a>
+        <a asp-controller="PlayerStats" asp-action="Index" asp-route-tournamentId="@Model.Id" class="btn btn-outline-success btn-sm"><i class="bi bi-clipboard-data"></i> Toàn bộ thống kê</a>
+        <a asp-controller="Matches" asp-action="Index" asp-route-tournamentId="@Model.Id" class="btn btn-outline-success btn-sm"><i class="bi bi-calendar-event"></i> Quản lý trận đấu</a>
+        @if (isAdmin)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Sửa</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Xóa</a>
+        }
+    </div>
+</div>
+<div class="card mb-3"><div class="card-body">
+    <div class="row small">
+        <div class="col-md-3"><span class="text-muted">Loại giải:</span> <b>@Model.Type.DisplayName()</b></div>
+        <div class="col-md-3"><span class="text-muted">Tổ chức:</span> <b>@(Model.Organizer ?? "-")</b></div>
+        <div class="col-md-3"><span class="text-muted">Thời gian:</span> <b>@(Model.StartDate?.ToString("dd/MM/yyyy") ?? "?") – @(Model.EndDate?.ToString("dd/MM/yyyy") ?? "đang diễn ra")</b></div>
+        <div class="col-md-3"><span class="text-muted">Trận đã đá / Tổng bàn:</span> <b>@matches.Count(m => m.IsPlayed) / @ViewBag.TotalGoals</b> · <span class="text-muted">Cầu thủ có số liệu:</span> <b>@ViewBag.PlayerCount</b></div>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.Description)) { <p class="small mt-2 mb-0">@Model.Description</p> }
+</div></div>
+<div class="sv-paged">
+<section class="sv-page" data-title="Bảng xếp hạng">
+    <div class="card"><div class="card-header"><i class="bi bi-list-ol"></i> Bảng xếp hạng @Model.Name @Model.Season</div>
+        <partial name="_Standings" model="(standings, false)" />
+    </div>
+</section>
+<section class="sv-page" data-title="Lịch &amp; kết quả">
+    <div class="card"><div class="card-header"><i class="bi bi-calendar3"></i> Lịch thi đấu &amp; kết quả theo vòng</div>
+        <partial name="_Matches" model="(matches, false)" />
+    </div>
+</section>
+<section class="sv-page" data-title="Thống kê cá nhân">
+<div class="row g-3">
+    <div class="col-xl-4"><partial name="_Leaderboard" model='("Vua phá lưới", "bi-bullseye", scorers, "Bàn")' /></div>
+    @if (Model.HasMatchDetails)
+    {
+        <div class="col-xl-4"><partial name="_Leaderboard" model='("Thi đấu nhiều phút nhất", "bi-stopwatch", minutes, "Phút")' /></div>
+    }
+    <div class="col-xl-4"><partial name="_Leaderboard" model='("Nhận nhiều thẻ phạt nhất", "bi-file-earmark-fill", cards, "Thẻ")' /></div>
+</div>
+</section>
+</div>

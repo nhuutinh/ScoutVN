@@ -1,0 +1,37 @@
+@model (List<ScoutVN.Models.Match> Matches, bool Public)
+@* Lịch thi đấu & kết quả theo vòng – mỗi vòng một trang (nút số chuyển vòng) *@
+@{
+    var rounds = Model.Matches.GroupBy(m => m.Round).OrderBy(g => g.Key).ToList();
+    var lastPlayed = rounds.LastOrDefault(g => g.Any(m => m.IsPlayed))?.Key ?? rounds.FirstOrDefault()?.Key ?? 1;
+    var startIdx = Math.Max(1, rounds.FindIndex(g => g.Key == lastPlayed) + 1);
+}
+@if (!rounds.Any())
+{
+    <div class="text-center text-muted py-4">Chưa có lịch thi đấu.</div>
+}
+else
+{
+<div class="sv-paged sv-paged-inner" data-start="@startIdx" data-nohash="1">
+    @foreach (var g in rounds)
+    {
+        <section class="sv-page" data-title="Vòng @g.Key">
+            <div class="list-group list-group-flush">
+            @foreach (var m in g.OrderBy(x => x.KickOff))
+            {
+                var hw = m.IsPlayed && m.HomeGoals > m.AwayGoals; var aw = m.IsPlayed && m.AwayGoals > m.HomeGoals;
+                <div class="list-group-item match-row">
+                    <div class="match-time small text-muted">@m.KickOff.ToString("dd/MM HH:mm")</div>
+                    <div class="match-team text-end @(hw ? "fw-bold" : "")">@m.HomeTeam?.Name</div>
+                    <div class="match-score">@(m.IsPlayed ? $"{m.HomeGoals} – {m.AwayGoals}" : "vs")</div>
+                    <div class="match-team @(aw ? "fw-bold" : "")">@m.AwayTeam?.Name</div>
+                    @if (!Model.Public && User.IsInRole("Admin"))
+                    {
+                        <div class="match-act"><a asp-controller="Matches" asp-action="Edit" asp-route-id="@m.Id" class="btn btn-sm btn-link p-0" title="Sửa"><i class="bi bi-pencil"></i></a></div>
+                    }
+                </div>
+            }
+            </div>
+        </section>
+    }
+</div>
+}

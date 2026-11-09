@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ScoutVN</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <partial name="_ThemeHead" />
+</head>
+<body>
+<partial name="_ThemeToggle" view-data='new ViewDataDictionary(ViewData) { { "OnDark", true }, { "Extra", "theme-toggle-float" } }' />
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="text-center text-white mb-3">
+            <a href="/" class="small text-white-50 text-decoration-none d-inline-block mb-2"><i class="bi bi-arrow-left"></i> Về trang chủ</a><br />
+            <i class="bi bi-dribbble" style="font-size:2.6rem;color:#4ade80"></i>
+            <h1 class="h3 fw-bold mb-0">ScoutVN</h1>
+            <div class="small opacity-75">Quản lý &amp; tuyển chọn cầu thủ bóng đá Việt Nam</div>
+        </div>
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

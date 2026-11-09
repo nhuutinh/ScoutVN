@@ -1,0 +1,63 @@
+@model Player
+@{
+    var p = Model;
+    ViewData["Title"] = p.FullName;
+    Layout = "_PublicLayout";
+    var attrs = new[] { ("Tốc độ", p.Pace), ("Dứt điểm", p.Shooting), ("Chuyền bóng", p.Passing), ("Rê bóng", p.Dribbling), ("Phòng ngự", p.Defending), ("Thể lực", p.Physical) };
+    var stats = p.Stats.ToList();
+}
+<section class="pv-section">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-action="Home">Trang chủ</a></li>
+        @if (p.Team != null) { <li class="breadcrumb-item"><a asp-action="Team" asp-route-id="@p.TeamId">@p.Team.Name</a></li> }
+        <li class="breadcrumb-item active">@p.FullName</li>
+    </ol></nav>
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="pv-card p-4 text-center player-side">
+                <partial name="_PlayerAvatar" model="p" view-data='new ViewDataDictionary(ViewData) { { "Large", true } }' />
+                <h1 class="h4 fw-bold mt-3 mb-1">@p.FullName</h1>
+                <div class="text-muted">@p.Position.DisplayName()</div>
+                <div class="my-2"><span class="ovr badge fs-5 @RatingHelper.BadgeClass(p.Overall)" title="Chỉ số tổng (ước tính)">@p.Overall</span></div>
+                <ul class="list-group list-group-flush text-start small mt-3">
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Đội bóng</span>
+                        @if (p.Team != null) { <a asp-action="Team" asp-route-id="@p.TeamId">@p.Team.Name</a> } else { <span>@p.Status.DisplayName()</span> }</li>
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Số áo</span><span>@(p.ShirtNumber?.ToString() ?? "–")</span></li>
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Tuổi</span><span>@p.Age</span></li>
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Quốc tịch</span><span>@p.Nationality</span></li>
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Chiều cao</span><span>@(p.HeightCm.HasValue ? p.HeightCm + " cm" : "–")</span></li>
+                    <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Giá trị chuyển nhượng</span><span>@ScoutVN.Services.Fmt.Money(p.MarketValue)</span></li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="pv-card p-4 mb-3">
+                <div class="fw-bold mb-3 d-flex justify-content-between">Chỉ số chi tiết <span class="small text-muted fw-normal">điểm /100 · con số cụ thể · căn cứ số liệu thật</span></div>
+                <partial name="_AttrInsights" model="((List<AttrInsight>)ViewBag.Insights, p)" />
+            </div>
+            <div class="pv-card">
+                <div class="p-3 fw-bold border-bottom">Thống kê thi đấu</div>
+                <div class="table-responsive"><table class="table table-hover mb-0 small align-middle">
+                    <thead class="text-uppercase text-muted"><tr><th>Giải / mùa</th><th>Đội</th><th class="text-center">Trận</th><th class="text-center">Phút</th><th class="text-center">Bàn</th><th class="text-center">Thẻ V/Đ</th></tr></thead>
+                    <tbody>
+                    @foreach (var s in stats)
+                    {
+                        var d = s.Tournament?.HasMatchDetails ?? true;
+                        <tr><td><a asp-action="Tournament" asp-route-id="@s.TournamentId">@s.Tournament?.Name @s.Tournament?.Season</a></td>
+                            <td>@(s.Team?.ShortName ?? "–")</td>
+                            <td class="text-center">@(d ? $"{s.Appearances} ({s.Starts})" : "–")</td><td class="text-center">@(d ? s.MinutesPlayed : "–")</td><td class="text-center fw-bold">@s.Goals</td>
+                            <td class="text-center">@s.YellowCards/@s.RedCards</td></tr>
+                    }
+                    @if (!stats.Any()) { <tr><td colspan="6" class="text-center text-muted py-3">Chưa có số liệu thi đấu.</td></tr> }
+                    </tbody>
+                </table></div>
+                <div class="data-source px-3 py-2 border-top">Trận (đá chính). “–”: mùa 2025/26 nguồn chỉ có bàn thắng và thẻ phạt. Nguồn: FotMob.</div>
+            </div>
+            <div class="pv-locked mt-3 d-flex flex-wrap align-items-center gap-3">
+                <i class="bi bi-graph-up-arrow fs-3 text-warning"></i>
+                <div class="flex-grow-1"><b>Xem phân tích chuyên sâu</b><br /><span class="small text-muted">Phân vị so với cầu thủ cùng vị trí, điểm mạnh – yếu, so sánh với cầu thủ khác (cần đăng nhập).</span></div>
+                <a asp-controller="Analysis" asp-action="Player" asp-route-id="@p.Id" class="btn btn-success btn-sm">Phân tích cầu thủ</a>
+            </div>
+        </div>
+    </div>
+</section>

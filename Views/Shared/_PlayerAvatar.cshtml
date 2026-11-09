@@ -1,0 +1,14 @@
+@model Player
+@{
+    var parts = Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = parts.Length >= 2 ? $"{parts[^2][0]}{parts[^1][0]}" : Model.FullName.Substring(0, Math.Min(2, Model.FullName.Length));
+    var cls = ViewData["Large"] is true ? "avatar avatar-lg" : "avatar";
+}
+@if (!string.IsNullOrEmpty(Model.PhotoUrl))
+{
+    <img src="@Model.PhotoUrl" alt="@Model.FullName" class="@cls" />
+}
+else
+{
+    <span class="@cls">@initials.ToUpper()</span>
+}

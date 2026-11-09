@@ -1,0 +1,16 @@
+@model Tournament
+@{ ViewData["Title"] = "Xóa giải đấu"; int statCount = ViewBag.StatCount; }
+<div class="page-header"><h1 class="text-danger">Xóa giải đấu</h1></div>
+<div class="card border-danger"><div class="card-body">
+    <p>Bạn có chắc muốn xóa giải đấu <b>@Model.Name @Model.Season</b>?</p>
+    @if (statCount > 0)
+    {
+        <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i>
+            Giải đấu có <b>@statCount</b> bản ghi thống kê cầu thủ. Các bản ghi này sẽ <b>bị xóa theo</b> và không thể khôi phục.</div>
+    }
+    <form asp-action="Delete" method="post" class="d-flex gap-2">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Xác nhận xóa</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+</div></div>

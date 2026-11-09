@@ -1,0 +1,23 @@
+@model Player
+@{ ViewData["Title"] = "Xóa cầu thủ"; int statCount = ViewBag.StatCount; }
+<div class="page-header"><h1 class="text-danger">Xóa cầu thủ</h1></div>
+<div class="card border-danger"><div class="card-body">
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <partial name="_PlayerAvatar" model="Model" />
+        <div>
+            <b>@Model.FullName</b> – @Model.Position.DisplayName()<br />
+            <span class="text-muted small">@(Model.Team?.Name ?? "Tự do") · @Model.Age tuổi</span>
+        </div>
+    </div>
+    @if (statCount > 0)
+    {
+        <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i>
+            Cầu thủ có <b>@statCount</b> bản ghi thống kê thi đấu, các bản ghi này sẽ <b>bị xóa theo</b>.
+            Nếu cầu thủ chỉ chuyển đội hoặc giải nghệ, nên <a asp-action="Edit" asp-route-id="@Model.Id">sửa trạng thái</a> thay vì xóa.</div>
+    }
+    <form asp-action="Delete" method="post" class="d-flex gap-2">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Xác nhận xóa</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Hủy</a>
+    </form>
+</div></div>

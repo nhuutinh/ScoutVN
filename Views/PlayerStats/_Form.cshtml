@@ -1,0 +1,42 @@
+@model PlayerStat
+@{
+    void Num(string field, string? step = null)
+    {
+        <div class="col-6 col-md-3 col-xl-2">
+            <label for="@field" class="form-label small">@Html.DisplayName(field)</label>
+            @Html.TextBox(field, null, new { @class = "form-control", type = "number", step = step ?? "1", min = "0" })
+            @Html.ValidationMessage(field, null, new { @class = "text-danger small" })
+        </div>
+    }
+}
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+<input type="hidden" asp-for="Id" />
+<div class="row g-3 mb-2">
+    <div class="col-md-5">
+        <label asp-for="PlayerId" class="form-label"></label> <span class="text-danger">*</span>
+        <select asp-for="PlayerId" class="form-select" asp-items="ViewBag.Players"><option value="0">-- Chọn cầu thủ --</option></select>
+        <span asp-validation-for="PlayerId" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="TournamentId" class="form-label"></label> <span class="text-danger">*</span>
+        <select asp-for="TournamentId" class="form-select" asp-items="ViewBag.Tournaments"><option value="0">-- Chọn giải đấu --</option></select>
+        <span asp-validation-for="TournamentId" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="TeamId" class="form-label"></label>
+        <select asp-for="TeamId" class="form-select" asp-items="ViewBag.Teams"><option value="">-- Không rõ --</option></select>
+    </div>
+</div>
+<h6 class="mt-3 text-muted">Ra sân</h6>
+<div class="row g-3">
+    @{ Num("Appearances"); Num("Starts"); Num("MinutesPlayed"); }
+</div>
+<h6 class="mt-3 text-muted">Ghi bàn &amp; kỷ luật</h6>
+<div class="row g-3">
+    @{ Num("Goals"); Num("PenaltyGoals"); Num("YellowCards"); Num("RedCards"); }
+</div>
+<h6 class="mt-3 text-muted">Thủ môn</h6>
+<div class="row g-3">
+    @{ Num("CleanSheets"); Num("GoalsConceded"); }
+</div>
+<p class="small text-muted mt-3 mb-0"><i class="bi bi-info-circle"></i> Với giải chỉ có số liệu bàn thắng / thẻ phạt (ví dụ V.League 2025/26), để số trận, đá chính, số phút bằng 0. Để trống “Bàn phạt đền” nếu nguồn không có số liệu.</p>

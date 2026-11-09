@@ -1,0 +1,28 @@
+@model UserFormViewModel
+@{ ViewData["Title"] = Model.Id == 0 ? "Thêm tài khoản" : "Sửa tài khoản"; }
+<div class="page-header"><h1>@ViewData["Title"]</h1></div>
+<div class="card" style="max-width:720px"><div class="card-body">
+    <form asp-action="Save" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <input type="hidden" asp-for="Id" />
+        <div class="row g-3">
+            <div class="col-md-6"><label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" /><span asp-validation-for="Username" class="text-danger small"></span></div>
+            <div class="col-md-6"><label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" /><span asp-validation-for="FullName" class="text-danger small"></span></div>
+            <div class="col-md-6"><label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
+            <div class="col-md-6"><label asp-for="Role" class="form-label"></label>
+                <select asp-for="Role" class="form-select" asp-items="EnumExtensions.ToSelectList<UserRole>()"></select></div>
+            <div class="col-md-6"><label asp-for="Password" class="form-label">@(Model.Id == 0 ? "Mật khẩu" : "Mật khẩu mới (để trống nếu không đổi)")</label>
+                <input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger small"></span></div>
+            <div class="col-md-6 d-flex align-items-end"><div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Lưu</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+        </div>
+    </form>
+</div></div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

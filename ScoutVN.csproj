@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ScoutVN</RootNamespace>
+    <UserSecretsId>scoutvn-nhom14-2026</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Dữ liệu V.League thật (đã qua ETL tools/build_seed.py) nhúng vào assembly để DbSeeder đọc -->
+  <ItemGroup>
+    <Content Remove="Data\Seed\**;tools\**" />
+    <None Include="tools\**" />
+    <EmbeddedResource Include="Data\Seed\vleague_seed.json" LogicalName="ScoutVN.Seed.vleague.json" />
+  </ItemGroup>
+
+  <!-- Chuỗi kết nối / khóa bí mật trên máy cá nhân: không đóng gói khi publish (máy chủ dùng biến môi trường) -->
+  <ItemGroup>
+    <Content Update="appsettings.Local.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+</Project>
